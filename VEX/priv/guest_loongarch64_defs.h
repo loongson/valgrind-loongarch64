@@ -33,6 +33,38 @@
 #include "libvex_basictypes.h"
 #include "guest_generic_bb_to_IR.h"  /* DisResult */
 
+
+/*---------------------------------------------------------*/
+/*--- loongarch64 to IR conversion                      ---*/
+/*---------------------------------------------------------*/
+
+/* Convert one LOONGARCH64 insn to IR.  See the type DisOneInstrFn in
+   guest_generic_bb_to_IR.h. */
+extern DisResult disInstr_LOONGARCH64 ( IRSB*              irsb_IN,
+                                        const UChar*       guest_code_IN,
+                                        Long               delta,
+                                        Addr               guest_IP,
+                                        VexArch            guest_arch,
+                                        const VexArchInfo* archinfo,
+                                        const VexAbiInfo*  abiinfo,
+                                        VexEndness         host_endness_IN,
+                                        Bool               sigill_diag_IN );
+
+/* Used by the optimiser to specialise calls to helpers. */
+extern IRExpr* guest_loongarch64_spechelper ( const HChar* function_name,
+                                              IRExpr**     args,
+                                              IRStmt**     precedingStmts,
+                                              Int          n_precedingStmts );
+
+/* Describes to the optimser which part of the guest state require
+   precise memory exceptions.  This is logically part of the guest
+   state description. */
+extern Bool guest_loongarch64_state_requires_precise_mem_exns ( Int minoff,
+                                                                Int maxoff,
+                                                                VexRegisterUpdates pxControl );
+
+extern VexGuestLayout loongarch64Guest_layout;
+
 #endif /* ndef __VEX_GUEST_LOONGARCH64_DEFS_H */
 
 

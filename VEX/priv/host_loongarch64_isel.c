@@ -35,6 +35,25 @@
 #include "host_loongarch64_defs.h"
 
 
+/*---------------------------------------------------------*/
+/*--- Insn selector top-level                           ---*/
+/*---------------------------------------------------------*/
+
+/* Translate an entire BB to LOONGARCH64 code. */
+HInstrArray* iselSB_LOONGARCH64 ( const IRSB* bb,
+                                  VexArch arch_host,
+                                  const VexArchInfo* archinfo_host,
+                                  const VexAbiInfo* vbi,
+                                  Int offs_Host_EvC_Counter,
+                                  Int offs_Host_EvC_FailAddr,
+                                  Bool chainingAllowed,
+                                  Bool addProfInc,
+                                  Addr max_ga )
+{
+   return NULL;
+}
+
+
 /*---------------------------------------------------------------*/
 /*--- end                             host_loongarch64_isel.c ---*/
 /*---------------------------------------------------------------*/
