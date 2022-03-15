@@ -34,6 +34,20 @@
 #include "host_loongarch64_defs.h"
 
 
+/* --------- Local helpers. --------- */
+
+static inline void mapReg ( HRegRemap* m, HReg* r )
+{
+   *r = lookupHRegRemap(m, *r);
+}
+
+static inline Int extend ( UInt imm, UInt size )
+{
+   UInt shift = 32 - size;
+   return (((Int)imm << shift) >> shift);
+}
+
+
 /* --------- Registers. --------- */
 
 const RRegUniverse* getRRegUniverse_LOONGARCH64 ( void )
