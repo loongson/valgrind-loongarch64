@@ -114,6 +114,31 @@ typedef enum {
 } LOONGARCH64CondCode;
 
 
+/* --------- Memory address expressions (amodes). --------- */
+
+typedef enum {
+   LAam_RI, /* Reg + Imm (signed 12-bit or signed 14-bit) */
+   LAam_RR  /* Reg1 + Reg2 */
+} LOONGARCH64AModeTag;
+
+typedef struct {
+   LOONGARCH64AModeTag tag;
+   union {
+      struct {
+         HReg   base;
+         UShort index;
+      } RI;
+      struct {
+         HReg base;
+         HReg index;
+      } RR;
+   } LAam;
+} LOONGARCH64AMode;
+
+extern LOONGARCH64AMode* LOONGARCH64AMode_RI ( HReg reg, UShort imm );
+extern LOONGARCH64AMode* LOONGARCH64AMode_RR ( HReg base, HReg index );
+
+
 /* --------- Instructions. --------- */
 
 /* Tags for instructions */

@@ -218,6 +218,80 @@ static inline const HChar* showLOONGARCH64CondCode ( LOONGARCH64CondCode cond )
 }
 
 
+/* --------- Memory address expressions (amodes). --------- */
+
+LOONGARCH64AMode* LOONGARCH64AMode_RI ( HReg reg, UShort imm )
+{
+   LOONGARCH64AMode* am = LibVEX_Alloc_inline(sizeof(LOONGARCH64AMode));
+   am->tag = LAam_RI;
+   am->LAam.RI.base = reg;
+   am->LAam.RI.index = imm;
+   return am;
+}
+
+LOONGARCH64AMode* LOONGARCH64AMode_RR ( HReg base, HReg index )
+{
+   LOONGARCH64AMode* am = LibVEX_Alloc_inline(sizeof(LOONGARCH64AMode));
+   am->tag = LAam_RR;
+   am->LAam.RR.base = base;
+   am->LAam.RR.index = index;
+   return am;
+}
+
+static inline void ppLOONGARCH64AMode ( LOONGARCH64AMode* am )
+{
+   switch (am->tag) {
+      case LAam_RI:
+         ppHRegLOONGARCH64(am->LAam.RI.base);
+         vex_printf(", ");
+         vex_printf("%d", extend((UInt)am->LAam.RI.index, 12));
+         break;
+      case LAam_RR:
+         ppHRegLOONGARCH64(am->LAam.RR.base);
+         vex_printf(", ");
+         ppHRegLOONGARCH64(am->LAam.RR.index);
+         break;
+      default:
+         vpanic("ppLOONGARCH64AMode");
+         break;
+   }
+}
+
+static inline void addRegUsage_LOONGARCH64AMode( HRegUsage* u,
+                                                 LOONGARCH64AMode* am )
+{
+   switch (am->tag) {
+      case LAam_RI:
+         addHRegUse(u, HRmRead, am->LAam.RI.base);
+         break;
+      case LAam_RR:
+         addHRegUse(u, HRmRead, am->LAam.RR.base);
+         addHRegUse(u, HRmRead, am->LAam.RR.index);
+         break;
+      default:
+         vpanic("addRegUsage_LOONGARCH64AMode");
+         break;
+   }
+}
+
+static inline void mapRegs_LOONGARCH64AMode( HRegRemap* m,
+                                             LOONGARCH64AMode* am )
+{
+   switch (am->tag) {
+      case LAam_RI:
+         mapReg(m, &am->LAam.RI.base);
+         break;
+      case LAam_RR:
+         mapReg(m, &am->LAam.RR.base);
+         mapReg(m, &am->LAam.RR.index);
+         break;
+      default:
+         vpanic("mapRegs_LOONGARCH64AMode");
+         break;
+   }
+}
+
+
 /* -------- Pretty Print instructions ------------- */
 
 void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
