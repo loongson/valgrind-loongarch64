@@ -65,6 +65,13 @@ extern Bool guest_loongarch64_state_requires_precise_mem_exns ( Int minoff,
 
 extern VexGuestLayout loongarch64Guest_layout;
 
+
+/*---------------------------------------------------------*/
+/*--- loongarch64 guest helpers                         ---*/
+/*---------------------------------------------------------*/
+
+extern ULong loongarch64_calculate_cpucfg ( ULong src );
+
 #endif /* ndef __VEX_GUEST_LOONGARCH64_DEFS_H */
 
 

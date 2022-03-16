@@ -233,6 +233,73 @@ VexGuestLayout loongarch64Guest_layout = {
 };
 
 
+/*-----------------------------------------------------------*/
+/*--- loongarch64 guest helpers                           ---*/
+/*-----------------------------------------------------------*/
+
+/* Claim to be the following CPU, which is probably representative of
+   the earliest loongarch64 offerings.
+
+   CPU Family          : Loongson-64bit
+   Model Name          : Loongson-3A5000LL
+   CPU Revision        : 0x10
+   FPU Revision        : 0x00
+   CPU MHz             : 2300.00
+   BogoMIPS            : 4600.00
+   TLB Entries         : 2112
+   Address Sizes       : 48 bits physical, 48 bits virtual
+   ISA                 : loongarch32 loongarch64
+   Features            : cpucfg lam ual fpu lsx lasx complex crypto lvz
+   Hardware Watchpoint : yes, iwatch count: 8, dwatch count: 8
+*/
+ULong loongarch64_calculate_cpucfg ( ULong src )
+{
+   ULong res;
+   switch (src) {
+      case 0x0:
+         res = 0x0014c010;
+         break;
+      case 0x1:
+         res = 0x03f2f2fe;
+         break;
+      case 0x2:
+         res = 0x007ccfc7;
+         break;
+      case 0x3:
+         res = 0x0000fcff;
+         break;
+      case 0x4:
+         res = 0x05f5e100;
+         break;
+      case 0x5:
+         res = 0x00010001;
+         break;
+      case 0x6:
+         res = 0x00007f33;
+         break;
+      case 0x10:
+         res = 0x00002c3d;
+         break;
+      case 0x11:
+         res = 0x06080003;
+         break;
+      case 0x12:
+         res = 0x06080003;
+         break;
+      case 0x13:
+         res = 0x0608000f;
+         break;
+      case 0x14:
+         res = 0x060e000f;
+         break;
+      default:
+         res = 0x00000000;
+         break;
+   }
+   return (ULong)(Long)(Int)res;
+}
+
+
 /*---------------------------------------------------------------*/
 /*--- end                         guest_loongarch64_helpers.c ---*/
 /*---------------------------------------------------------------*/

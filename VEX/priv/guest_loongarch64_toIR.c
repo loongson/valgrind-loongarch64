@@ -3868,7 +3868,19 @@ static Bool gen_cpucfg ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("cpucfg %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_cpucfg",
+                                &loongarch64_calculate_cpucfg,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 
