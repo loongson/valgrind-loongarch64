@@ -6157,105 +6157,236 @@ static Bool gen_fmov_s ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fmov.s %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   putFReg32(fd, getFReg32(fj));
+
+   return True;
 }
 
 static Bool gen_fmov_d ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fmov.d %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   putFReg64(fd, getFReg64(fj));
+
+   return True;
 }
 
 static Bool gen_fsel ( DisResult* dres, UInt insn,
                        const VexArchInfo* archinfo,
                        const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt ca = get_ca(insn);
+   UInt fk = get_fk(insn);
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fsel %s, %s, %s, %s\n", nameFReg(fd), nameFReg(fj),
+                                nameFReg(fk), nameFCC(ca));
+
+   IRExpr* cc = unop(Iop_8Uto64, getFCC(ca));
+   IRExpr* cond = binop(Iop_CmpEQ64, cc, mkU64(0));
+   IRExpr* iftrue = unop(Iop_ReinterpF64asI64, getFReg64(fj));
+   IRExpr* iffalse = unop(Iop_ReinterpF64asI64, getFReg64(fk));
+   IRExpr* move = gen_cmove_d(cond, iftrue, iffalse);
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, move));
+
+   return True;
 }
 
 static Bool gen_movgr2fr_w ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("movgr2fr.w %s, %s\n", nameFReg(fd), nameIReg(rj));
+
+   /* The high bits might be undefined, now the hardware implementation
+      of this instruction is that it is equivalent to movgr2fr.d. */
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, getIReg64(rj)));
+
+   return True;
 }
 
 static Bool gen_movgr2fr_d ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("movgr2fr.d %s, %s\n", nameFReg(fd), nameIReg(rj));
+
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, getIReg64(rj)));
+
+   return True;
 }
 
 static Bool gen_movgr2frh_w ( DisResult* dres, UInt insn,
                               const VexArchInfo* archinfo,
                               const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("movgr2frh.w %s, %s\n", nameFReg(fd), nameIReg(rj));
+
+   IRExpr* shl1 = binop(Iop_Shl64, getIReg64(rj), mkU8(32));
+   IRExpr* i = unop(Iop_ReinterpF64asI64, getFReg64(fd));
+   IRExpr* shl2 = binop(Iop_Shl64, i, mkU8(32));
+   IRExpr* shr = binop(Iop_Shr64, shl2, mkU8(32));
+   IRExpr* or = binop(Iop_Or64, shl1, shr);
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, or));
+
+   return True;
 }
 
 static Bool gen_movfr2gr_s ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("movfr2gr.s %s, %s\n", nameIReg(rd), nameFReg(fj));
+
+   IRExpr* i = unop(Iop_ReinterpF32asI32, getFReg32(fj));
+   putIReg(rd, extendS(Ity_I32, i));
+
+   return True;
 }
 
 static Bool gen_movfr2gr_d ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("movfr2gr.d %s, %s\n", nameIReg(rd), nameFReg(fj));
+
+   putIReg(rd, unop(Iop_ReinterpF64asI64, getFReg64(fj)));
+
+   return True;
 }
 
 static Bool gen_movfrh2gr_s ( DisResult* dres, UInt insn,
                               const VexArchInfo* archinfo,
                               const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("movfrh2gr.s %s, %s\n", nameIReg(rd), nameFReg(fj));
+
+   IRExpr* i = unop(Iop_ReinterpF64asI64, getFReg64(fj));
+   IRExpr* shr = binop(Iop_Shr64, i, mkU8(32));
+   putIReg(rd, extendS(Ity_I32, unop(Iop_64to32, shr)));
+
+   return True;
 }
 
 static Bool gen_movgr2fcsr ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt   rj = get_rj(insn);
+   UInt fcsr = get_fcsrl(insn);
+
+   DIP("movgr2fcsr %s, %s\n", nameFCSR(fcsr), nameIReg(rj));
+
+   putFCSR(fcsr, getIReg32(rj));
+
+   return True;
 }
 
 static Bool gen_movfcsr2gr ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fcsr = get_fcsrh(insn);
+   UInt   rd = get_rd(insn);
+
+   DIP("movfcsr2gr %s, %s\n", nameIReg(rd), nameFCSR(fcsr));
+
+   putIReg(rd, extendS(Ity_I32, getFCSR(fcsr)));
+
+   return True;
 }
 
 static Bool gen_movfr2cf ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt cd = get_cd(insn);
+
+   DIP("movfr2cf %s, %s\n", nameFCC(cd), nameFReg(fj));
+
+   IRExpr* i = unop(Iop_ReinterpF64asI64, getFReg64(fj));
+   IRExpr* and = binop(Iop_And64, i, mkU64(0x1));
+   putFCC(cd, unop(Iop_64to8, and));
+
+   return True;
 }
 
 static Bool gen_movcf2fr ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt cj = get_cj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("movcf2fr %s, %s\n", nameFReg(fd), nameFCC(cj));
+
+   /* The hardware implementation of this instruction
+      does clear the high bits. */
+   IRExpr* cc = unop(Iop_8Uto64, getFCC(cj));
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, cc));
+
+   return True;
 }
 
 static Bool gen_movgr2cf ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt cd = get_cd(insn);
+
+   DIP("movgr2cf %s, %s\n", nameFCC(cd), nameIReg(rj));
+
+   IRExpr* and = binop(Iop_And64, getIReg64(rj), mkU64(0x1));
+   putFCC(cd, unop(Iop_64to8, and));
+
+   return True;
 }
 
 static Bool gen_movcf2gr ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt cj = get_cj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("movcf2gr %s, %s\n", nameIReg(rd), nameFCC(cj));
+
+   /* The hardware implementation of this instruction
+      does clear the high bits. */
+   putIReg(rd, unop(Iop_8Uto64, getFCC(cj)));
+
+   return True;
 }
 
 
