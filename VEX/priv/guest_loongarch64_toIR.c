@@ -1854,28 +1854,76 @@ static Bool gen_bitrev_4b ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("bitrev.4b %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_bitrev_4b",
+                                &loongarch64_calculate_bitrev_4b,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_bitrev_8b ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("bitrev.8b %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_bitrev_8b",
+                                &loongarch64_calculate_bitrev_8b,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_bitrev_w ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("bitrev.w %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_bitrev_w",
+                                &loongarch64_calculate_bitrev_w,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_bitrev_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("bitrev.d %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_bitrev_d",
+                                &loongarch64_calculate_bitrev_d,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_bytepick_w ( DisResult* dres, UInt insn,
