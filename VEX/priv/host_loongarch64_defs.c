@@ -292,6 +292,76 @@ static inline void mapRegs_LOONGARCH64AMode( HRegRemap* m,
 }
 
 
+/* --------- Operand, which can be reg or imm. --------- */
+
+LOONGARCH64RI* LOONGARCH64RI_R ( HReg reg )
+{
+   LOONGARCH64RI* op = LibVEX_Alloc_inline(sizeof(LOONGARCH64RI));
+   op->tag = LAri_Reg;
+   op->LAri.R.reg = reg;
+   return op;
+}
+
+LOONGARCH64RI* LOONGARCH64RI_I ( UShort imm, UChar size, Bool isSigned )
+{
+   LOONGARCH64RI* op = LibVEX_Alloc_inline(sizeof(LOONGARCH64RI));
+   op->tag = LAri_Imm;
+   op->LAri.I.imm = imm;
+   op->LAri.I.size = size;
+   op->LAri.I.isSigned = isSigned;
+   vassert(imm < (1 << size));
+   vassert(size == 5 || size == 6 || size == 12);
+   return op;
+}
+
+static inline void ppLOONGARCH64RI ( LOONGARCH64RI* ri )
+{
+   switch (ri->tag) {
+      case LAri_Reg:
+         ppHRegLOONGARCH64(ri->LAri.R.reg);
+         break;
+      case LAri_Imm:
+         if (ri->LAri.I.isSigned) {
+            vex_printf("%d", extend((UInt)ri->LAri.I.imm, ri->LAri.I.size));
+         } else {
+            vex_printf("%u", (UInt)ri->LAri.I.imm);
+         }
+         break;
+      default:
+         vpanic("ppLOONGARCH64RI");
+         break;
+   }
+}
+
+static inline void addRegUsage_LOONGARCH64RI( HRegUsage* u, LOONGARCH64RI* ri )
+{
+   switch (ri->tag) {
+      case LAri_Reg:
+         addHRegUse(u, HRmRead, ri->LAri.R.reg);
+         break;
+      case LAri_Imm:
+         break;
+      default:
+         vpanic("addRegUsage_LOONGARCH64RI");
+         break;
+   }
+}
+
+static inline void mapRegs_LOONGARCH64RI( HRegRemap* m, LOONGARCH64RI* ri )
+{
+   switch (ri->tag) {
+      case LAri_Reg:
+         mapReg(m, &ri->LAri.R.reg);
+         break;
+      case LAri_Imm:
+         break;
+      default:
+         vpanic("mapRegs_LOONGARCH64RI");
+         break;
+   }
+}
+
+
 /* -------- Pretty Print instructions ------------- */
 
 void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )

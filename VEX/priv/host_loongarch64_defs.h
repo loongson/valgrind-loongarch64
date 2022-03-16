@@ -139,6 +139,31 @@ extern LOONGARCH64AMode* LOONGARCH64AMode_RI ( HReg reg, UShort imm );
 extern LOONGARCH64AMode* LOONGARCH64AMode_RR ( HReg base, HReg index );
 
 
+/* --------- Operand, which can be reg or imm. --------- */
+
+typedef enum {
+   LAri_Reg,
+   LAri_Imm
+} LOONGARCH64RITag;
+
+typedef struct {
+   LOONGARCH64RITag tag;
+   union {
+      struct {
+         HReg reg;
+      } R;
+      struct {
+         UShort imm;
+         UChar  size; // size == 5 || size == 6 || size == 12
+         Bool   isSigned;
+      } I;
+   } LAri;
+} LOONGARCH64RI;
+
+extern LOONGARCH64RI* LOONGARCH64RI_R ( HReg reg );
+extern LOONGARCH64RI* LOONGARCH64RI_I ( UShort imm, UChar size, Bool isSigned );
+
+
 /* --------- Instructions. --------- */
 
 /* Tags for instructions */
