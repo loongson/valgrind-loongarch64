@@ -3766,49 +3766,102 @@ static Bool gen_break ( DisResult* dres, UInt insn,
                         const VexArchInfo* archinfo,
                         const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt code = get_code(insn);
+
+   DIP("break %u\n", code);
+
+   putPC(mkU64(guest_PC_curr_instr + 4));
+
+   dres->jk_StopHere = Ijk_SigTRAP;
+   dres->whatNext    = Dis_StopHere;
+
+   return True;
 }
 
 static Bool gen_syscall ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt hint = get_hint15(insn);
+
+   DIP("syscall %u\n", hint);
+
+   putPC(mkU64(guest_PC_curr_instr + 4));
+
+   dres->jk_StopHere = Ijk_Sys_syscall;
+   dres->whatNext    = Dis_StopHere;
+
+   return True;
 }
 
 static Bool gen_asrtle_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+
+   DIP("asrtle.d %s, %s\n", nameIReg(rj), nameIReg(rk));
+
+   gen_SIGSEGV(binop(Iop_CmpLT64U, getIReg64(rk), getIReg64(rj)));
+
+   return True;
 }
 
 static Bool gen_asrtgt_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+
+   DIP("asrtgt.d %s, %s\n", nameIReg(rj), nameIReg(rk));
+
+   gen_SIGSEGV(binop(Iop_CmpLE64U, getIReg64(rj), getIReg64(rk)));
+
+   return True;
 }
 
 static Bool gen_rdtimel_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("rdtimel.w %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   putIReg(rd, mkU64(0));
+
+   return True;
 }
 
 static Bool gen_rdtimeh_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("rdtimeh.w %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   putIReg(rd, mkU64(0));
+
+   return True;
 }
 
 static Bool gen_rdtime_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("rdtime.d %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   putIReg(rd, mkU64(0));
+
+   return True;
 }
 
 static Bool gen_cpucfg ( DisResult* dres, UInt insn,
