@@ -6398,112 +6398,324 @@ static Bool gen_fld_s ( DisResult* dres, UInt insn,
                         const VexArchInfo* archinfo,
                         const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt si12 = get_si12(insn);
+   UInt   rj = get_rj(insn);
+   UInt   fd = get_fd(insn);
+
+   DIP("fld.s %s, %s, %d\n", nameFReg(fd), nameIReg(rj),
+                             (Int)extend32(si12, 12));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   putFReg32(fd, load(Ity_F32, addr));
+
+   return True;
 }
 
 static Bool gen_fst_s ( DisResult* dres, UInt insn,
                         const VexArchInfo* archinfo,
                         const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt si12 = get_si12(insn);
+   UInt   rj = get_rj(insn);
+   UInt   fd = get_fd(insn);
+
+   DIP("fst.s %s, %s, %d\n", nameFReg(fd), nameIReg(rj),
+                             (Int)extend32(si12, 12));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   store(addr, getFReg32(fd));
+
+   return True;
 }
 
 static Bool gen_fld_d ( DisResult* dres, UInt insn,
                         const VexArchInfo* archinfo,
                         const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt si12 = get_si12(insn);
+   UInt   rj = get_rj(insn);
+   UInt   fd = get_fd(insn);
+
+   DIP("fld.d %s, %s, %d\n", nameFReg(fd), nameIReg(rj),
+                             (Int)extend32(si12, 12));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   putFReg64(fd, load(Ity_F64, addr));
+
+   return True;
 }
 
 static Bool gen_fst_d ( DisResult* dres, UInt insn,
                         const VexArchInfo* archinfo,
                         const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt si12 = get_si12(insn);
+   UInt   rj = get_rj(insn);
+   UInt   fd = get_fd(insn);
+
+   DIP("fst.d %s, %s, %d\n", nameFReg(fd), nameIReg(rj),
+                             (Int)extend32(si12, 12));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   store(addr, getFReg64(fd));
+
+   return True;
 }
 
 static Bool gen_fldx_s ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldx.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   putFReg32(fd, load(Ity_F32, addr));
+
+   return True;
 }
 
 static Bool gen_fldx_d ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldx.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   putFReg64(fd, load(Ity_F64, addr));
+
+   return True;
 }
 
 static Bool gen_fstx_s ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstx.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   store(addr, getFReg32(fd));
+
+   return True;
 }
 
 static Bool gen_fstx_d ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstx.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
+      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   store(addr, getFReg64(fd));
+
+   return True;
 }
 
 static Bool gen_fldgt_s ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldgt.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
+   putFReg32(fd, load(Ity_F32, addr));
+
+   return True;
 }
 
 static Bool gen_fldgt_d ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldgt.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
+   putFReg64(fd, load(Ity_F64, addr));
+
+   return True;
 }
 
 static Bool gen_fldle_s ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldle.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
+   putFReg64(fd, extendS(Ity_F32, load(Ity_F32, addr)));
+
+   return True;
 }
 
 static Bool gen_fldle_d ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fldle.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
+   putFReg64(fd, load(Ity_F64, addr));
+
+   return True;
 }
 
 static Bool gen_fstgt_s ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstgt.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
+   store(addr, getFReg32(fd));
+
+   return True;
 }
 
 static Bool gen_fstgt_d ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstgt.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
+   store(addr, getFReg64(fd));
+
+   return True;
 }
 
 static Bool gen_fstle_s ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstle.s %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
+   store(addr, getFReg32(fd));
+
+   return True;
 }
 
 static Bool gen_fstle_d ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fstle.d %s, %s, %s\n", nameFReg(fd), nameIReg(rj), nameIReg(rk));
+
+   IRTemp tmp1 = newTemp(Ity_I64);
+   assign(tmp1, getIReg64(rj));
+   IRTemp tmp2 = newTemp(Ity_I64);
+   assign(tmp2, getIReg64(rk));
+   IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
+   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
+   store(addr, getFReg64(fd));
+
+   return True;
 }
 
 
