@@ -99,6 +99,21 @@ extern UInt ppHRegLOONGARCH64 ( HReg reg );
 #define LOONGARCH64_N_ARGREGS 8 /* a0 ... a7 */
 
 
+/* --------- Condition codes, LOONGARCH64 encoding. --------- */
+typedef enum {
+   LAcc_EQ  = 0, /* equal */
+   LAcc_NE  = 1, /* not equal */
+
+   LAcc_LT  = 2, /* less than (signed) */
+   LAcc_GE  = 3, /* great equal (signed) */
+
+   LAcc_LTU = 4, /* less than (unsigned) */
+   LAcc_GEU = 5, /* great equal (unsigned) */
+
+   LAcc_AL  = 6  /* always (unconditional) */
+} LOONGARCH64CondCode;
+
+
 /* --------- Instructions. --------- */
 
 /* Tags for instructions */

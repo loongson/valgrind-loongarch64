@@ -183,6 +183,41 @@ UInt ppHRegLOONGARCH64 ( HReg reg )
 }
 
 
+/* --------- Condition codes, LOONGARCH64 encoding. --------- */
+
+static inline const HChar* showLOONGARCH64CondCode ( LOONGARCH64CondCode cond )
+{
+   const HChar* ret;
+   switch (cond) {
+      case LAcc_EQ:
+         ret = "eq";  /* equal */
+         break;
+      case LAcc_NE:
+         ret = "ne";  /* not equal */
+         break;
+      case LAcc_LT:
+         ret = "lt";  /* less than (signed) */
+         break;
+      case LAcc_GE:
+         ret = "ge";  /* great equal (signed) */
+         break;
+      case LAcc_LTU:
+         ret = "ltu"; /* less than (unsigned) */
+         break;
+      case LAcc_GEU:
+         ret = "geu"; /* great equal (unsigned) */
+         break;
+      case LAcc_AL:
+         ret = "al";    /* always (unconditional) */
+         break;
+      default:
+         vpanic("showLOONGARCH64CondCode");
+         break;
+   }
+   return ret;
+}
+
+
 /* -------- Pretty Print instructions ------------- */
 
 void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
