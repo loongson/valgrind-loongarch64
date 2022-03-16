@@ -4966,14 +4966,38 @@ static Bool gen_fclass_s ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fclass.s %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   IRExpr** arg = mkIRExprVec_1(unop(Iop_ReinterpF64asI64, getFReg64(fj)));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_fclass_s",
+                                &loongarch64_calculate_fclass_s,
+                                arg);
+   putFReg32(fd, unop(Iop_ReinterpI32asF32, unop(Iop_64to32, call)));
+
+   return True;
 }
 
 static Bool gen_fclass_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fclass.d %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   IRExpr** arg = mkIRExprVec_1(unop(Iop_ReinterpF64asI64, getFReg64(fj)));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_fclass_d",
+                                &loongarch64_calculate_fclass_d,
+                                arg);
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, call));
+
+   return True;
 }
 
 
