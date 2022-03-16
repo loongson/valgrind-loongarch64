@@ -4924,42 +4924,98 @@ static Bool gen_frsqrt_s ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("frsqrt.s %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   calculateFCSR(FRSQRT_S, 1, fj, 0, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg32(fd, binop(Iop_RSqrtF32, rm, getFReg32(fj)));
+
+   return True;
 }
 
 static Bool gen_frsqrt_d ( DisResult* dres, UInt insn,
                            const VexArchInfo* archinfo,
                            const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("frsqrt.d %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   calculateFCSR(FRSQRT_D, 1, fj, 0, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg64(fd, binop(Iop_RSqrtF64, rm, getFReg64(fj)));
+
+   return True;
 }
 
 static Bool gen_fscaleb_s ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fk = get_fk(insn);
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fscaleb.s %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
+
+   calculateFCSR(FSCALEB_S, 2, fj, fk, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg32(fd, triop(Iop_ScaleBF32, rm, getFReg32(fj), getFReg32(fk)));
+
+   return True;
 }
 
 static Bool gen_fscaleb_d ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fk = get_fk(insn);
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("fscaleb.d %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
+
+   calculateFCSR(FSCALEB_D, 2, fj, fk, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg64(fd, triop(Iop_ScaleBF64, rm, getFReg64(fj), getFReg64(fk)));
+
+   return True;
 }
 
 static Bool gen_flogb_s ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("flogb.s %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   calculateFCSR(FLOGB_S, 1, fj, 0, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg32(fd, binop(Iop_LogBF32, rm, getFReg32(fj)));
+
+   return True;
 }
 
 static Bool gen_flogb_d ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt fj = get_fj(insn);
+   UInt fd = get_fd(insn);
+
+   DIP("flogb.d %s, %s\n", nameFReg(fd), nameFReg(fj));
+
+   calculateFCSR(FLOGB_D, 1, fj, 0, 0);
+   IRExpr* rm = get_rounding_mode();
+   putFReg64(fd, binop(Iop_LogBF64, rm, getFReg64(fj)));
+
+   return True;
 }
 
 static Bool gen_fcopysign_s ( DisResult* dres, UInt insn,
