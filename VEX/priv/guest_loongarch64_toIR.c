@@ -3830,56 +3830,160 @@ static Bool gen_crc_w_b_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crc.w.b.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(8));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crc",
+                                &loongarch64_calculate_crc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crc_w_h_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crc.w.h.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(16));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crc",
+                                &loongarch64_calculate_crc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crc_w_w_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crc.w.w.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(32));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crc",
+                                &loongarch64_calculate_crc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crc_w_d_w ( DisResult* dres, UInt insn,
                             const VexArchInfo* archinfo,
                             const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crc.w.d.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(64));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crc",
+                                &loongarch64_calculate_crc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crcc_w_b_w ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crcc.w.b.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(8));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crcc",
+                                &loongarch64_calculate_crcc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crcc_w_h_w ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crcc.w.h.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(16));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crcc",
+                                &loongarch64_calculate_crcc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crcc_w_w_w ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crcc.w.w.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(32));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crcc",
+                                &loongarch64_calculate_crcc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_crcc_w_d_w ( DisResult* dres, UInt insn,
                              const VexArchInfo* archinfo,
                              const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rk = get_rk(insn);
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("crcc.w.d.w %s, %s, %s\n", nameIReg(rd), nameIReg(rj), nameIReg(rk));
+
+   IRExpr** arg = mkIRExprVec_3(getIReg64(rk), getIReg64(rj), mkU64(64));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_crcc",
+                                &loongarch64_calculate_crcc,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_break ( DisResult* dres, UInt insn,

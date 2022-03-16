@@ -81,6 +81,8 @@ extern ULong loongarch64_calculate_bitrev_4b ( ULong src );
 extern ULong loongarch64_calculate_bitrev_8b ( ULong src );
 extern ULong loongarch64_calculate_bitrev_w  ( ULong src );
 extern ULong loongarch64_calculate_bitrev_d  ( ULong src );
+extern ULong loongarch64_calculate_crc       ( ULong old, ULong msg, ULong len );
+extern ULong loongarch64_calculate_crcc      ( ULong old, ULong msg, ULong len );
 
 #endif /* ndef __VEX_GUEST_LOONGARCH64_DEFS_H */
 
