@@ -70,7 +70,13 @@ extern VexGuestLayout loongarch64Guest_layout;
 /*--- loongarch64 guest helpers                         ---*/
 /*---------------------------------------------------------*/
 
-extern ULong loongarch64_calculate_cpucfg ( ULong src );
+extern ULong loongarch64_calculate_cpucfg  ( ULong src );
+extern ULong loongarch64_calculate_revb_2h ( ULong src );
+extern ULong loongarch64_calculate_revb_4h ( ULong src );
+extern ULong loongarch64_calculate_revb_2w ( ULong src );
+extern ULong loongarch64_calculate_revb_d  ( ULong src );
+extern ULong loongarch64_calculate_revh_2w ( ULong src );
+extern ULong loongarch64_calculate_revh_d  ( ULong src );
 
 #endif /* ndef __VEX_GUEST_LOONGARCH64_DEFS_H */
 

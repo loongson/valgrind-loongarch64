@@ -299,6 +299,74 @@ ULong loongarch64_calculate_cpucfg ( ULong src )
    return (ULong)(Long)(Int)res;
 }
 
+static void swap_UChar ( UChar* a, UChar* b )
+{
+   UChar t = *a;
+   *a = *b;
+   *b = t;
+}
+
+ULong loongarch64_calculate_revb_2h ( ULong src )
+{
+   UChar* s = (UChar*)&src;
+   swap_UChar(&s[0], &s[1]);
+   swap_UChar(&s[2], &s[3]);
+   return (ULong)(Long)(Int)src;
+}
+
+ULong loongarch64_calculate_revb_4h ( ULong src )
+{
+   UChar* s = (UChar*)&src;
+   swap_UChar(&s[0], &s[1]);
+   swap_UChar(&s[2], &s[3]);
+   swap_UChar(&s[4], &s[5]);
+   swap_UChar(&s[6], &s[7]);
+   return src;
+}
+
+ULong loongarch64_calculate_revb_2w ( ULong src )
+{
+   UChar* s = (UChar*)&src;
+   swap_UChar(&s[0], &s[3]);
+   swap_UChar(&s[1], &s[2]);
+   swap_UChar(&s[4], &s[7]);
+   swap_UChar(&s[5], &s[6]);
+   return src;
+}
+
+ULong loongarch64_calculate_revb_d ( ULong src )
+{
+   UChar* s = (UChar*)&src;
+   swap_UChar(&s[0], &s[7]);
+   swap_UChar(&s[1], &s[6]);
+   swap_UChar(&s[2], &s[5]);
+   swap_UChar(&s[3], &s[4]);
+   return src;
+}
+
+static void swap_UShort ( UShort* a, UShort* b )
+{
+   UShort t = *a;
+   *a = *b;
+   *b = t;
+}
+
+ULong loongarch64_calculate_revh_2w ( ULong src )
+{
+   UShort* s = (UShort*)&src;
+   swap_UShort(&s[0], &s[1]);
+   swap_UShort(&s[2], &s[3]);
+   return src;
+}
+
+ULong loongarch64_calculate_revh_d ( ULong src )
+{
+   UShort* s = (UShort*)&src;
+   swap_UShort(&s[0], &s[3]);
+   swap_UShort(&s[1], &s[2]);
+   return src;
+}
+
 
 /*---------------------------------------------------------------*/
 /*--- end                         guest_loongarch64_helpers.c ---*/

@@ -1740,42 +1740,114 @@ static Bool gen_revb_2h ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revb.2h %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revb_2h",
+                                &loongarch64_calculate_revb_2h,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_revb_4h ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revb.4h %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revb_4h",
+                                &loongarch64_calculate_revb_4h,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_revb_2w ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revb.2w %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revb_2w",
+                                &loongarch64_calculate_revb_2w,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_revb_d ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revb.d %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revb_d",
+                                &loongarch64_calculate_revb_d,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_revh_2w ( DisResult* dres, UInt insn,
                           const VexArchInfo* archinfo,
                           const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revh.2w %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revh_2w",
+                                &loongarch64_calculate_revh_2w,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_revh_d ( DisResult* dres, UInt insn,
                          const VexArchInfo* archinfo,
                          const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt rj = get_rj(insn);
+   UInt rd = get_rd(insn);
+
+   DIP("revh.d %s, %s\n", nameIReg(rd), nameIReg(rj));
+
+   IRExpr** arg = mkIRExprVec_1(getIReg64(rj));
+   IRExpr* call = mkIRExprCCall(Ity_I64, 0/*regparms*/,
+                                "loongarch64_calculate_revh_d",
+                                &loongarch64_calculate_revh_d,
+                                arg);
+   putIReg(rd, call);
+
+   return True;
 }
 
 static Bool gen_bitrev_4b ( DisResult* dres, UInt insn,
