@@ -408,11 +408,12 @@ typedef enum {
       condition (which could be LAcc_AL). */
    LAin_Call,       /* call */
 
-   /* The following 4 insns are mandated by translation chaining */
+   /* The following 5 insns are mandated by translation chaining */
    LAin_XDirect,    /* direct transfer to GA */
    LAin_XIndir,     /* indirect transfer to GA */
    LAin_XAssisted,  /* assisted transfer to GA */
-   LAin_EvCheck     /* Event check */
+   LAin_EvCheck,    /* Event check */
+   LAin_ProfInc     /* 64-bit profile counter increment */
 } LOONGARCH64InstrTag;
 
 typedef struct {
@@ -532,6 +533,11 @@ typedef struct {
          LOONGARCH64AMode*    amCounter;
          LOONGARCH64AMode*    amFailAddr;
       } EvCheck;
+      struct {
+         /* No fields.  The address of the counter to inc is
+            installed later, post-translation, by patching it in,
+            as it is not known at translation time. */
+      } ProfInc;
    } LAin;
 } LOONGARCH64Instr;
 
@@ -595,6 +601,7 @@ extern LOONGARCH64Instr* LOONGARCH64Instr_XAssisted ( HReg dstGA,
                                                       IRJumpKind jk );
 extern LOONGARCH64Instr* LOONGARCH64Instr_EvCheck   ( LOONGARCH64AMode* amCounter,
                                                       LOONGARCH64AMode* amFailAddr );
+extern LOONGARCH64Instr* LOONGARCH64Instr_ProfInc   ( void );
 
 extern void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 );
 

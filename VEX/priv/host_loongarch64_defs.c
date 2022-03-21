@@ -1007,6 +1007,13 @@ LOONGARCH64Instr* LOONGARCH64Instr_EvCheck ( LOONGARCH64AMode* amCounter,
    return i;
 }
 
+LOONGARCH64Instr* LOONGARCH64Instr_ProfInc ( void )
+{
+   LOONGARCH64Instr* i = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
+   i->tag              = LAin_ProfInc;
+   return i;
+}
+
 
 /* -------- Pretty Print instructions ------------- */
 
@@ -1228,6 +1235,15 @@ static inline void ppEvCheck ( LOONGARCH64AMode* amCounter,
    vex_printf("; nofail:");
 }
 
+static inline void ppProfInc ( void )
+{
+   vex_printf("(profInc) ");
+   vex_printf("li $t0, NotKnownYet; ");
+   vex_printf("ld.d $t1, $t0, 0; ");
+   vex_printf("addi.d $t1, $t1, 1; ");
+   vex_printf("st.d $t1, $t0, 0;");
+}
+
 void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
 {
    vassert(mode64 == True);
@@ -1308,6 +1324,9 @@ void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
          break;
       case LAin_EvCheck:
          ppEvCheck(i->LAin.EvCheck.amCounter, i->LAin.EvCheck.amFailAddr);
+         break;
+      case LAin_ProfInc:
+         ppProfInc();
          break;
       default:
          vpanic("ppLOONGARCH64Instr");
@@ -1457,6 +1476,12 @@ void getRegUsage_LOONGARCH64Instr ( HRegUsage* u, const LOONGARCH64Instr* i,
          addRegUsage_LOONGARCH64AMode(u, i->LAin.EvCheck.amFailAddr);
          addHRegUse(u, HRmWrite, hregT0()); /* unavail to RA */
          break;
+      case LAin_ProfInc:
+         /* Again, pointless to actually state these since neither
+            is available to RA. */
+         addHRegUse(u, HRmWrite, hregT0()); /* unavail to RA */
+         addHRegUse(u, HRmWrite, hregT1()); /* unavail to RA */
+         break;
       default:
          ppLOONGARCH64Instr(i, mode64);
          vpanic("getRegUsage_LOONGARCH64Instr");
@@ -1563,6 +1588,9 @@ void mapRegs_LOONGARCH64Instr ( HRegRemap* m, LOONGARCH64Instr* i,
             fact pointless, since $r31 isn't allocatable, but anyway.. */
          mapRegs_LOONGARCH64AMode(m, i->LAin.EvCheck.amCounter);
          mapRegs_LOONGARCH64AMode(m, i->LAin.EvCheck.amFailAddr);
+         break;
+      case LAin_ProfInc:
+         /* Hardwires $r12 and $r13 -- nothing to modify. */
          break;
       default:
          ppLOONGARCH64Instr(i, mode64);
@@ -2554,6 +2582,21 @@ static inline UInt* mkEvCheck ( UInt* p, LOONGARCH64AMode* amCounter,
    return p;
 }
 
+static inline UInt* mkProfInc ( UInt* p )
+{
+   /*
+      li     $t0, 0x6555755585559555ULL
+      ld.d   $t1, $t0, 0
+      addi.d $t1, $t1, 1
+      st.d   $t1, $t0, 0
+    */
+   p = mkLoadImm(p, hregT0(), 0x6555755585559555ULL);
+   *p++ = emit_op_si12_rj_rd(LAload_LD_D, 0, 12, 13);
+   *p++ = emit_op_si12_rj_rd(LAbin_ADDI_D, 1, 13, 13);
+   *p++ = emit_op_si12_rj_rd(LAstore_ST_D, 0, 12, 13);
+   return p;
+}
+
 /* Emit an instruction into buf and return the number of bytes used.
    Note that buf is not the insn's final place, and therefore it is
    imperative to emit position-independent code.  If the emitted
@@ -2661,6 +2704,9 @@ Int emit_LOONGARCH64Instr ( /*MB_MOD*/Bool* is_profInc,
       case LAin_EvCheck:
          p = mkEvCheck(p, i->LAin.EvCheck.amCounter,
                        i->LAin.EvCheck.amFailAddr);
+         break;
+      case LAin_ProfInc:
+         p = mkProfInc(p);
          break;
       default:
          p = NULL;
