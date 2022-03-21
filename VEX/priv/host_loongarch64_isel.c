@@ -33,6 +33,7 @@
 #include "main_globals.h"
 #include "host_generic_regs.h"
 #include "host_loongarch64_defs.h"
+#include "libvex_guest_offsets.h"  // For OFFSET_loongarch64_COND
 
 
 /*---------------------------------------------------------*/
@@ -143,6 +144,279 @@ static HReg newVRegF ( ISelEnv* env )
    HReg reg = mkHReg(True/*virtual reg*/, HRcFlt64, 0, env->vreg_ctr);
    env->vreg_ctr++;
    return reg;
+}
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Forward declarations                        ---*/
+/*---------------------------------------------------------*/
+
+/* These are organised as iselXXX and iselXXX_wrk pairs.  The
+   iselXXX_wrk do the real work, but are not to be called directly.
+   For each XXX, iselXXX calls its iselXXX_wrk counterpart, then
+   checks that all returned registers are virtual.  You should not
+   call the _wrk version directly.
+*/
+
+static LOONGARCH64AMode*   iselIntExpr_AMode_wrk ( ISelEnv* env,
+                                                   IRExpr* e, IRType dty );
+static LOONGARCH64AMode*   iselIntExpr_AMode     ( ISelEnv* env,
+                                                   IRExpr* e, IRType dty );
+
+static LOONGARCH64RI*      iselIntExpr_RI_wrk    ( ISelEnv* env, IRExpr* e,
+                                                   UChar size, Bool isSigned );
+static LOONGARCH64RI*      iselIntExpr_RI        ( ISelEnv* env, IRExpr* e,
+                                                   UChar size, Bool isSigned );
+
+static HReg                iselIntExpr_R_wrk     ( ISelEnv* env, IRExpr* e );
+static HReg                iselIntExpr_R         ( ISelEnv* env, IRExpr* e );
+
+static void                iselCondCode_wrk      ( ISelEnv* env, IRExpr* e,
+                                                   LOONGARCH64CondCode* cc,
+                                                   HReg* dst );
+static LOONGARCH64CondCode iselCondCode_C        ( ISelEnv* env, IRExpr* e );
+static HReg                iselCondCode_R        ( ISelEnv* env, IRExpr* e );
+
+static void                iselInt128Expr_wrk    ( HReg* hi, HReg* lo,
+                                                   ISelEnv* env, IRExpr* e );
+static void                iselInt128Expr        ( HReg* hi, HReg* lo,
+                                                   ISelEnv* env, IRExpr* e );
+
+static HReg                iselFltExpr_wrk        ( ISelEnv* env, IRExpr* e );
+static HReg                iselFltExpr            ( ISelEnv* env, IRExpr* e );
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Misc helpers                                ---*/
+/*---------------------------------------------------------*/
+
+/* Generate move insn */
+static LOONGARCH64Instr* LOONGARCH64Instr_Move ( HReg to, HReg from )
+{
+   LOONGARCH64RI *ri = LOONGARCH64RI_R(hregZERO());
+   return LOONGARCH64Instr_Binary(LAbin_OR, ri, from, to);
+}
+
+/* Generate LOONGARCH64AMode from HReg and UInt */
+static LOONGARCH64AMode* mkLOONGARCH64AMode_RI ( HReg reg, UInt imm )
+{
+   vassert(imm < (1 << 12));
+   return LOONGARCH64AMode_RI(reg, (UShort)imm);
+}
+
+/* Store result to guest_COND */
+static void store_guest_COND ( ISelEnv* env, HReg src )
+{
+   UInt offs = OFFSET_loongarch64_COND;
+   LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offs);
+   addInstr(env, LOONGARCH64Instr_Store(LAstore_ST_W, am, src));
+}
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Integer expressions (64/32/16/8 bit)        ---*/
+/*---------------------------------------------------------*/
+
+/* Select insns for an integer-typed expression, and add them to the
+   code list.  Return a reg holding the result.  This reg will be a
+   virtual register.  THE RETURNED REG MUST NOT BE MODIFIED.  If you
+   want to modify it, ask for a new vreg, copy it in there, and modify
+   the copy.  The register allocator will do its best to map both
+   vregs to the same real register, so the copies will often disappear
+   later in the game.
+
+   This should handle expressions of 64, 32, 16 and 8-bit type.
+   All results are returned in a (mode64 ? 64bit : 32bit) register.
+   For 16- and 8-bit expressions, the upper (32/48/56 : 16/24) bits
+   are arbitrary, so you should mask or sign extend partial values
+   if necessary.
+*/
+
+/* --------------------- AMode --------------------- */
+
+static LOONGARCH64AMode* iselIntExpr_AMode ( ISelEnv* env,
+                                             IRExpr* e, IRType dty )
+{
+   LOONGARCH64AMode* am = iselIntExpr_AMode_wrk(env, e, dty);
+
+   /* sanity checks ... */
+   switch (am->tag) {
+      case LAam_RI:
+         vassert(am->LAam.RI.index < (1 << 11)); /* The sign bit (bit 12) must be 0. */
+         vassert(hregClass(am->LAam.RI.base) == HRcInt64);
+         vassert(hregIsVirtual(am->LAam.RI.base));
+         break;
+      case LAam_RR:
+         vassert(hregClass(am->LAam.RR.base) == HRcInt64);
+         vassert(hregIsVirtual(am->LAam.RR.base));
+         vassert(hregClass(am->LAam.RR.index) == HRcInt64);
+         vassert(hregIsVirtual(am->LAam.RR.index));
+         break;
+      default:
+         vpanic("iselIntExpr_AMode: unknown LOONGARCH64 AMode tag");
+         break;
+   }
+
+   return am;
+}
+
+/* DO NOT CALL THIS DIRECTLY ! */
+static LOONGARCH64AMode* iselIntExpr_AMode_wrk ( ISelEnv* env,
+                                                 IRExpr* e, IRType dty )
+{
+   return NULL;
+}
+
+/* --------------------- RI --------------------- */
+
+static LOONGARCH64RI* iselIntExpr_RI ( ISelEnv* env, IRExpr* e,
+                                       UChar size, Bool isSigned )
+{
+   LOONGARCH64RI* ri = iselIntExpr_RI_wrk(env, e, size, isSigned);
+
+   /* sanity checks ... */
+   switch (ri->tag) {
+      case LAri_Imm:
+         vassert(ri->LAri.I.size == 5 || ri->LAri.I.size == 6
+                 || ri->LAri.I.size == 12);
+         if (ri->LAri.I.size == 5) {
+            vassert(ri->LAri.I.isSigned == False);
+            vassert(ri->LAri.I.imm < (1 << 5));
+         } else if (ri->LAri.I.size == 6) {
+            vassert(ri->LAri.I.isSigned == False);
+            vassert(ri->LAri.I.imm < (1 << 6));
+         } else {
+            vassert(ri->LAri.I.imm < (1 << 12));
+         }
+         break;
+      case LAri_Reg:
+         vassert(hregClass(ri->LAri.R.reg) == HRcInt64);
+         vassert(hregIsVirtual(ri->LAri.R.reg));
+         break;
+      default:
+         vpanic("iselIntExpr_RI: unknown LOONGARCH64 RI tag");
+         break;
+   }
+
+   return ri;
+}
+
+/* DO NOT CALL THIS DIRECTLY ! */
+static LOONGARCH64RI* iselIntExpr_RI_wrk ( ISelEnv* env, IRExpr* e,
+                                           UChar size, Bool isSigned )
+{
+   return NULL;
+}
+
+/* --------------------- Reg --------------------- */
+
+static HReg iselIntExpr_R ( ISelEnv* env, IRExpr* e )
+{
+   HReg r = iselIntExpr_R_wrk(env, e);
+
+   /* sanity checks ... */
+   vassert(hregClass(r) == HRcInt64);
+   vassert(hregIsVirtual(r));
+
+   return r;
+}
+
+/* DO NOT CALL THIS DIRECTLY ! */
+static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
+{
+   HReg r;
+   return r;
+}
+
+/* ------------------- CondCode ------------------- */
+
+/* Generate code to evaluated a bit-typed expression, returning the
+   condition code which would correspond when the expression would
+   notionally have returned 1. */
+
+static LOONGARCH64CondCode iselCondCode_C ( ISelEnv* env, IRExpr* e )
+{
+   LOONGARCH64CondCode cc;
+   HReg r = newVRegI(env);
+   iselCondCode_wrk(env, e, &cc, &r);
+
+   /* sanity checks ... */
+   vassert(cc >= LAcc_EQ && cc <= LAcc_AL);
+
+   return cc;
+}
+
+static HReg iselCondCode_R ( ISelEnv* env, IRExpr* e )
+{
+   LOONGARCH64CondCode cc;
+   HReg r = newVRegI(env);
+   iselCondCode_wrk(env, e, &cc, &r);
+
+   /* sanity checks ... */
+   vassert(hregClass(r) == HRcInt64);
+   vassert(hregIsVirtual(r));
+
+   return r;
+}
+
+/* DO NOT CALL THIS DIRECTLY ! */
+static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
+                               LOONGARCH64CondCode* cc, HReg* dst )
+{
+}
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Integer expressions (128 bit)               ---*/
+/*---------------------------------------------------------*/
+
+/* Compute a 128-bit value into a register pair, which is returned as
+   the first two parameters.  As with iselIntExpr_R, these may be
+   either real or virtual regs; in any case they must not be changed
+   by subsequent code emitted by the caller.  */
+
+static void iselInt128Expr(HReg* hi, HReg* lo, ISelEnv* env, IRExpr* e)
+{
+   iselInt128Expr_wrk(hi, lo, env, e);
+
+   /* sanity checks ... */
+   vassert(hregClass(*hi) == HRcInt64);
+   vassert(hregIsVirtual(*hi));
+   vassert(hregClass(*lo) == HRcInt64);
+   vassert(hregIsVirtual(*lo));
+}
+
+/* DO NOT CALL THIS DIRECTLY ! */
+static void iselInt128Expr_wrk(HReg* hi, HReg* lo, ISelEnv* env, IRExpr* e)
+{
+}
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Floating point expressions (64/32 bit)      ---*/
+/*---------------------------------------------------------*/
+
+/* Compute a floating point value into a register, the identity of
+   which is returned.  As with iselIntExpr_R, the reg may be either
+   real or virtual; in any case it must not be changed by subsequent
+   code emitted by the caller.  */
+
+static HReg iselFltExpr ( ISelEnv* env, IRExpr* e )
+{
+   HReg r = iselFltExpr_wrk(env, e);
+
+   /* sanity checks ... */
+   vassert(hregClass(r) == HRcFlt64);
+   vassert(hregIsVirtual(r));
+
+   return r;
+}
+
+/* DO NOT CALL THIS DIRECTLY */
+static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
+{
+   HReg r;
+   return r;
 }
 
 
