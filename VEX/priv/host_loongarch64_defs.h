@@ -93,6 +93,12 @@ ST_IN HReg hregLOONGARCH64_FCSR3 ( void ) { return mkHReg(False, HRcInt32, 3, 40
 
 #undef ST_IN
 
+#define hregZERO() hregLOONGARCH64_R0()
+#define hregSP()   hregLOONGARCH64_R3()
+#define hregT0()   hregLOONGARCH64_R12()
+#define hregT1()   hregLOONGARCH64_R13()
+#define hregGSP()  hregLOONGARCH64_R31()
+
 extern UInt ppHRegLOONGARCH64 ( HReg reg );
 
 /* Number of registers used arg passing in function calls */
@@ -396,7 +402,11 @@ typedef enum {
 
    /* Pseudo-insn */
    LAin_Cas,        /* compare and swap */
-   LAin_Cmp         /* word compare */
+   LAin_Cmp,        /* word compare */
+
+   /* Call target (an absolute address), on given
+      condition (which could be LAcc_AL). */
+   LAin_Call        /* call */
 } LOONGARCH64InstrTag;
 
 typedef struct {
@@ -489,6 +499,12 @@ typedef struct {
          HReg                 src1;
          HReg                 src2;
       } Cmp;
+      struct {
+         LOONGARCH64CondCode  cond;
+         Addr64               target;
+         UInt                 nArgRegs;
+         RetLoc               rloc;
+      } Call;
    } LAin;
 } LOONGARCH64Instr;
 
@@ -535,6 +551,10 @@ extern LOONGARCH64Instr* LOONGARCH64Instr_Cas       ( HReg old, HReg addr,
 extern LOONGARCH64Instr* LOONGARCH64Instr_Cmp       ( LOONGARCH64CondCode cond,
                                                       HReg src2, HReg src1,
                                                       HReg dst );
+extern LOONGARCH64Instr* LOONGARCH64Instr_Call      ( LOONGARCH64CondCode cond,
+                                                      Addr64 target,
+                                                      UInt nArgRegs,
+                                                      RetLoc rloc );
 
 extern void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 );
 
