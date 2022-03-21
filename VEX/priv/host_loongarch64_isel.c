@@ -147,6 +147,36 @@ static HReg newVRegF ( ISelEnv* env )
 
 
 /*---------------------------------------------------------*/
+/*--- ISEL: Statements                                  ---*/
+/*---------------------------------------------------------*/
+
+static void iselStmt(ISelEnv* env, IRStmt* stmt)
+{
+   if (vex_traceflags & VEX_TRACE_VCODE) {
+      vex_printf("\n-- ");
+      ppIRStmt(stmt);
+      vex_printf("\n");
+   }
+
+   switch (stmt->tag) {
+      default:
+         ppIRStmt(stmt);
+         vpanic("iselStmt(loongarch64)");
+         break;
+   }
+}
+
+
+/*---------------------------------------------------------*/
+/*--- ISEL: Basic block terminators (Nexts)             ---*/
+/*---------------------------------------------------------*/
+
+static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
+{
+}
+
+
+/*---------------------------------------------------------*/
 /*--- Insn selector top-level                           ---*/
 /*---------------------------------------------------------*/
 
@@ -161,7 +191,105 @@ HInstrArray* iselSB_LOONGARCH64 ( const IRSB* bb,
                                   Bool addProfInc,
                                   Addr max_ga )
 {
-   return NULL;
+   Int        i, j;
+   HReg       hreg, hregHI;
+   ISelEnv*   env;
+   UInt       hwcaps_host = archinfo_host->hwcaps;
+   LOONGARCH64AMode *amCounter, *amFailAddr;
+
+   /* sanity ... */
+   vassert(arch_host == VexArchLOONGARCH64);
+   vassert((hwcaps_host & ~(VEX_HWCAPS_LOONGARCH_CPUCFG
+                          | VEX_HWCAPS_LOONGARCH_LAM
+                          | VEX_HWCAPS_LOONGARCH_UAL
+                          | VEX_HWCAPS_LOONGARCH_FP
+                          | VEX_HWCAPS_LOONGARCH_LSX
+                          | VEX_HWCAPS_LOONGARCH_LASX
+                          | VEX_HWCAPS_LOONGARCH_COMPLEX
+                          | VEX_HWCAPS_LOONGARCH_CRYPTO
+                          | VEX_HWCAPS_LOONGARCH_LVZP
+                          | VEX_HWCAPS_LOONGARCH_X86BT
+                          | VEX_HWCAPS_LOONGARCH_ARMBT
+                          | VEX_HWCAPS_LOONGARCH_MIPSBT
+                          | VEX_HWCAPS_LOONGARCH_ISA_32BIT
+                          | VEX_HWCAPS_LOONGARCH_ISA_64BIT)) == 0);
+
+   /* Check that the host's endianness is as expected. */
+   vassert(archinfo_host->endness == VexEndnessLE);
+
+   /* Make up an initial environment to use. */
+   env = LibVEX_Alloc_inline(sizeof(ISelEnv));
+   env->vreg_ctr = 0;
+
+   /* Set up output code array. */
+   env->code = newHInstrArray();
+
+   /* Copy BB's type env. */
+   env->type_env = bb->tyenv;
+
+   /* Make up an IRTemp -> virtual HReg mapping.  This doesn't
+      change as we go along. */
+   env->n_vregmap = bb->tyenv->types_used;
+   env->vregmap   = LibVEX_Alloc_inline(env->n_vregmap * sizeof(HReg));
+   env->vregmapHI = LibVEX_Alloc_inline(env->n_vregmap * sizeof(HReg));
+
+   /* and finally ... */
+   env->chainingAllowed = chainingAllowed;
+   env->hwcaps          = hwcaps_host;
+   env->max_ga          = max_ga;
+
+   /* For each IR temporary, allocate a suitably-kinded virtual register. */
+   j = 0;
+   for (i = 0; i < env->n_vregmap; i++) {
+      hregHI = hreg = INVALID_HREG;
+      switch (bb->tyenv->types[i]) {
+         case Ity_I1:
+         case Ity_I8:
+         case Ity_I16:
+         case Ity_I32:
+         case Ity_I64:
+            hreg = mkHReg(True, HRcInt64, 0, j++);
+            break;
+         case Ity_I128:
+            hreg   = mkHReg(True, HRcInt64, 0, j++);
+            hregHI = mkHReg(True, HRcInt64, 0, j++);
+            break;
+         case Ity_F16: // we'll use HRcFlt64 regs for F16 too
+         case Ity_F32: // we'll use HRcFlt64 regs for F32 too
+         case Ity_F64:
+            hreg = mkHReg(True, HRcFlt64, 0, j++);
+            break;
+         default:
+            ppIRType(bb->tyenv->types[i]);
+            vpanic("iselBB(loongarch64): IRTemp type");
+      }
+      env->vregmap[i]   = hreg;
+      env->vregmapHI[i] = hregHI;
+   }
+   env->vreg_ctr = j;
+
+   /* The very first instruction must be an event check. */
+   amCounter  = mkLOONGARCH64AMode_RI(hregGSP(), offs_Host_EvC_Counter);
+   amFailAddr = mkLOONGARCH64AMode_RI(hregGSP(), offs_Host_EvC_FailAddr);
+   addInstr(env, LOONGARCH64Instr_EvCheck(amCounter, amFailAddr));
+
+   /* Possibly a block counter increment (for profiling).  At this
+      point we don't know the address of the counter, so just pretend
+      it is zero.  It will have to be patched later, but before this
+      translation is used, by a call to LibVEX_patchProfCtr. */
+   if (addProfInc) {
+      addInstr(env, LOONGARCH64Instr_ProfInc());
+   }
+
+   /* Ok, finally we can iterate over the statements. */
+   for (i = 0; i < bb->stmts_used; i++)
+      iselStmt(env, bb->stmts[i]);
+
+   iselNext(env, bb->next, bb->jumpkind, bb->offsIP);
+
+   /* record the number of vregs we used. */
+   env->code->n_vregs = env->vreg_ctr;
+   return env->code;
 }
 
 
