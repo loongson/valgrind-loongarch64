@@ -406,7 +406,12 @@ typedef enum {
 
    /* Call target (an absolute address), on given
       condition (which could be LAcc_AL). */
-   LAin_Call        /* call */
+   LAin_Call,       /* call */
+
+   /* The following 3 insns are mandated by translation chaining */
+   LAin_XDirect,    /* direct transfer to GA */
+   LAin_XIndir,     /* indirect transfer to GA */
+   LAin_XAssisted   /* assisted transfer to GA */
 } LOONGARCH64InstrTag;
 
 typedef struct {
@@ -505,6 +510,23 @@ typedef struct {
          UInt                 nArgRegs;
          RetLoc               rloc;
       } Call;
+      struct {
+         Addr64               dstGA;
+         LOONGARCH64AMode*    amPC;
+         LOONGARCH64CondCode  cond;
+         Bool                 toFastEP;
+      } XDirect;
+      struct {
+         HReg                 dstGA;
+         LOONGARCH64AMode*    amPC;
+         LOONGARCH64CondCode  cond;
+      } XIndir;
+      struct {
+         HReg                 dstGA;
+         LOONGARCH64AMode*    amPC;
+         LOONGARCH64CondCode  cond;
+         IRJumpKind           jk;
+      } XAssisted;
    } LAin;
 } LOONGARCH64Instr;
 
@@ -555,6 +577,17 @@ extern LOONGARCH64Instr* LOONGARCH64Instr_Call      ( LOONGARCH64CondCode cond,
                                                       Addr64 target,
                                                       UInt nArgRegs,
                                                       RetLoc rloc );
+extern LOONGARCH64Instr* LOONGARCH64Instr_XDirect   ( Addr64 dstGA,
+                                                      LOONGARCH64AMode* amPC,
+                                                      LOONGARCH64CondCode cond,
+                                                      Bool toFastEP );
+extern LOONGARCH64Instr* LOONGARCH64Instr_XIndir    ( HReg dstGA,
+                                                      LOONGARCH64AMode* amPC,
+                                                      LOONGARCH64CondCode cond );
+extern LOONGARCH64Instr* LOONGARCH64Instr_XAssisted ( HReg dstGA,
+                                                      LOONGARCH64AMode* amPC,
+                                                      LOONGARCH64CondCode cond,
+                                                      IRJumpKind jk );
 
 extern void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 );
 
