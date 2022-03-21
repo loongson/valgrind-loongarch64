@@ -451,6 +451,182 @@ LOONGARCH64Instr* genMove_LOONGARCH64 ( HReg from, HReg to, Bool mode64 )
 
 /* --------- The loongarch64 assembler --------- */
 
+static inline UInt iregEnc ( HReg r )
+{
+   vassert(hregClass(r) == HRcInt64);
+   vassert(!hregIsVirtual(r));
+   UInt n = hregEncoding(r);
+   vassert(n < 32);
+   return n;
+}
+
+static inline UInt fregEnc ( HReg r )
+{
+   vassert(hregClass(r) == HRcFlt64);
+   vassert(!hregIsVirtual(r));
+   UInt n = hregEncoding(r);
+   vassert(n < 32);
+   return n;
+}
+
+static inline UInt fcsrEnc ( HReg r )
+{
+   vassert(hregClass(r) == HRcInt32);
+   vassert(!hregIsVirtual(r));
+   UInt n = hregEncoding(r);
+   vassert(n < 32);
+   return n;
+}
+
+static inline UInt emit_op_rj_rd ( UInt op, UInt rj, UInt rd )
+{
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_rk_rj_rd ( UInt op, UInt rk, UInt rj, UInt rd )
+{
+   vassert(rk < (1 << 5));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (rk << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_fj_fd ( UInt op, UInt fj, UInt fd )
+{
+   vassert(fj < (1 << 5));
+   vassert(fd < (1 << 5));
+   return op | (fj << 5) | fd;
+}
+
+static inline UInt emit_op_fa_fk_fj_fd ( UInt op, UInt fa, UInt fk, UInt fj, UInt fd )
+{
+   vassert(fa < (1 << 5));
+   vassert(fk < (1 << 5));
+   vassert(fj < (1 << 5));
+   vassert(fd < (1 << 5));
+   return op | (fa << 15) | (fk << 10) | (fj << 5) | fd;
+}
+
+static inline UInt emit_op_fk_fj_fd ( UInt op, UInt fk, UInt fj, UInt fd )
+{
+   vassert(fk < (1 << 5));
+   vassert(fj < (1 << 5));
+   vassert(fd < (1 << 5));
+   return op | (fk << 10) | (fj << 5) | fd;
+}
+
+static inline UInt emit_op_fk_fj_cd ( UInt op, UInt fk, UInt fj, UInt cd )
+{
+   vassert(fk < (1 << 5));
+   vassert(fj < (1 << 5));
+   vassert(cd < (1 << 3));
+   return op | (fk << 10) | (fj << 5) | cd;
+}
+
+static inline UInt emit_op_cj_rd ( UInt op, UInt cj, UInt rd )
+{
+   vassert(cj < (1 << 3));
+   vassert(rd < (1 << 5));
+   return op | (cj << 5) | rd;
+}
+
+static inline UInt emit_op_rj_fd ( UInt op, UInt rj, UInt fd )
+{
+   vassert(rj < (1 << 5));
+   vassert(fd < (1 << 5));
+   return op | (rj << 5) | fd;
+}
+
+static inline UInt emit_op_fj_rd ( UInt op, UInt fj, UInt rd )
+{
+   vassert(fj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (fj << 5) | rd;
+}
+
+static inline UInt emit_op_rj_fcsr ( UInt op, UInt rj, UInt fcsr )
+{
+   vassert(rj < (1 << 5));
+   vassert(fcsr < (1 << 5));
+   return op | (rj << 5) | fcsr;
+}
+
+static inline UInt emit_op_fcsr_rd ( UInt op, UInt fcsr, UInt rd )
+{
+   vassert(fcsr < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (fcsr << 5) | rd;
+}
+
+static inline UInt emit_op_ui5_rj_rd ( UInt op, UInt ui5, UInt rj, UInt rd )
+{
+   vassert(ui5 < (1 << 5));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (ui5 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_ui6_rj_rd ( UInt op, UInt ui6, UInt rj, UInt rd )
+{
+   vassert(ui6 < (1 << 6));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (ui6 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_ui12_rj_rd ( UInt op, UInt ui12, UInt rj, UInt rd )
+{
+   vassert(ui12 < (1 << 12));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (ui12 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_si12_rj_rd ( UInt op, UInt si12, UInt rj, UInt rd )
+{
+   vassert(si12 < (1 << 12));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (si12 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_si14_rj_rd ( UInt op, UInt si14, UInt rj, UInt rd )
+{
+   vassert(si14 < (1 << 14));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (si14 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_si20_rd ( UInt op, UInt si20, UInt rd )
+{
+   vassert(si20 < (1 << 20));
+   vassert(rd < (1 << 5));
+   return op | (si20 << 5) | rd;
+}
+
+static inline UInt emit_op_offs16_rj_rd ( UInt op, UInt offs16, UInt rj, UInt rd )
+{
+   vassert(offs16 < (1 << 16));
+   vassert(rj < (1 << 5));
+   vassert(rd < (1 << 5));
+   return op | (offs16 << 10) | (rj << 5) | rd;
+}
+
+static inline UInt emit_op_offs26 ( UInt op, UInt offs26 )
+{
+   vassert(offs26 < (1 << 26));
+   return op | ((offs26 & 0xffff) << 10) | (offs26 >> 16);
+}
+
+static inline UInt emit_op_hint15 ( UInt op, UInt hint )
+{
+   vassert(hint < (1 << 15));
+   return op | hint;
+}
+
 /* Emit an instruction into buf and return the number of bytes used.
    Note that buf is not the insn's final place, and therefore it is
    imperative to emit position-independent code.  If the emitted
