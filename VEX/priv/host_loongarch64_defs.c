@@ -362,12 +362,34 @@ static inline void mapRegs_LOONGARCH64RI( HRegRemap* m, LOONGARCH64RI* ri )
 }
 
 
+/* --------- Instructions. --------- */
+
+LOONGARCH64Instr* LOONGARCH64Instr_LI ( ULong imm, HReg dst )
+{
+   LOONGARCH64Instr* i = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
+   i->tag              = LAin_LI;
+   i->LAin.LI.imm      = imm;
+   i->LAin.LI.dst      = dst;
+   return i;
+}
+
+
 /* -------- Pretty Print instructions ------------- */
+
+static inline void ppLI ( ULong imm, HReg dst )
+{
+   vex_printf("li ");
+   ppHRegLOONGARCH64(dst);
+   vex_printf(", 0x%llx", imm);
+}
 
 void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
 {
    vassert(mode64 == True);
    switch (i->tag) {
+      case LAin_LI:
+         ppLI(i->LAin.LI.imm, i->LAin.LI.dst);
+         break;
       default:
          vpanic("ppLOONGARCH64Instr");
          break;
@@ -383,6 +405,9 @@ void getRegUsage_LOONGARCH64Instr ( HRegUsage* u, const LOONGARCH64Instr* i,
    vassert(mode64 == True);
    initHRegUsage(u);
    switch (i->tag) {
+      case LAin_LI:
+         addHRegUse(u, HRmWrite, i->LAin.LI.dst);
+         break;
       default:
          ppLOONGARCH64Instr(i, mode64);
          vpanic("getRegUsage_LOONGARCH64Instr");
@@ -395,6 +420,9 @@ void mapRegs_LOONGARCH64Instr ( HRegRemap* m, LOONGARCH64Instr* i,
 {
    vassert(mode64 == True);
    switch (i->tag) {
+      case LAin_LI:
+         mapReg(m, &i->LAin.LI.dst);
+         break;
       default:
          ppLOONGARCH64Instr(i, mode64);
          vpanic("mapRegs_LOONGARCH64Instr");
@@ -627,6 +655,30 @@ static inline UInt emit_op_hint15 ( UInt op, UInt hint )
    return op | hint;
 }
 
+static UInt* mkLoadImm ( UInt* p, HReg dst, ULong imm )
+{
+   /*
+      lu12i.w dst, imm[31:12]
+      ori     dst, dst, imm[11:0]
+      lu32i.d dst, imm[51:32]
+      lu52i.d dst, dst, imm[63:52]
+    */
+   UInt reg = iregEnc(dst);
+   *p++ = emit_op_si20_rd(LAextra_LU12I_W, (imm >> 12) & 0xfffff, reg);
+   *p++ = emit_op_si12_rj_rd(LAbin_ORI, imm & 0xfff, reg, reg);
+   *p++ = emit_op_si20_rd(LAextra_LU32I_D, (imm >> 32) & 0xfffff, reg);
+   *p++ = emit_op_si12_rj_rd(LAextra_LU52I_D, (imm >> 52) & 0xfff, reg, reg);
+   return p;
+}
+
+static Bool is_LoadImm ( UInt* p, HReg dst, ULong imm )
+{
+   UInt expect[4];
+   mkLoadImm(expect, dst, imm);
+   return toBool(p[0] == expect[0] && p[1] == expect[1] &&
+                 p[2] == expect[2] && p[3] == expect[3]);
+}
+
 /* Emit an instruction into buf and return the number of bytes used.
    Note that buf is not the insn's final place, and therefore it is
    imperative to emit position-independent code.  If the emitted
@@ -650,6 +702,9 @@ Int emit_LOONGARCH64Instr ( /*MB_MOD*/Bool* is_profInc,
    vassert((((HWord)buf) & 3) == 0);
 
    switch (i->tag) {
+      case LAin_LI:
+         p = mkLoadImm(p, i->LAin.LI.dst, i->LAin.LI.imm);
+         break;
       default:
          p = NULL;
          break;
