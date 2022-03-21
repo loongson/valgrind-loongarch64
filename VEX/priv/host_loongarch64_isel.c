@@ -447,6 +447,78 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
 
 static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
 {
+   if (vex_traceflags & VEX_TRACE_VCODE) {
+      vex_printf("\n-- PUT(%d) = ", offsIP);
+      ppIRExpr(next);
+      vex_printf("; exit-");
+      ppIRJumpKind(jk);
+      vex_printf("\n");
+   }
+
+   /* Case: boring transfer to known address */
+   if (next->tag == Iex_Const) {
+      IRConst* cdst = next->Iex.Const.con;
+      vassert(cdst->tag == Ico_U64);
+      if (jk == Ijk_Boring) {
+         /* Boring transfer to known address */
+         LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);
+         if (env->chainingAllowed) {
+            /* .. almost always true .. */
+            /* Skip the event check at the dst if this is a forwards edge. */
+            Bool toFastEP = ((Addr64)cdst->Ico.U64) > env->max_ga;
+            addInstr(env, LOONGARCH64Instr_XDirect(cdst->Ico.U64, am, LAcc_AL, toFastEP));
+         } else {
+            /* .. very occasionally .. */
+            /* We can't use chaining, so ask for an assisted transfer,
+               as that's the only alternative that is allowable. */
+            HReg dst = iselIntExpr_R(env, next);
+            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, Ijk_Boring));
+         }
+         return;
+      }
+   }
+
+   /* Case: boring transfer to any address */
+   switch (jk) {
+      case Ijk_Boring: {
+         HReg dst = iselIntExpr_R(env, next);
+         LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);
+         if (env->chainingAllowed) {
+            addInstr(env, LOONGARCH64Instr_XIndir(dst, am, LAcc_AL));
+         } else {
+            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, Ijk_Boring));
+         }
+         return;
+      }
+      default:
+         break;
+   }
+
+   /* Case: assisted transfer to arbitrary address */
+   switch (jk) {
+      /* Keep this list in sync with that for Ist_Exit above */
+      case Ijk_ClientReq:
+      case Ijk_NoDecode:
+      case Ijk_InvalICache:
+      case Ijk_NoRedir:
+      case Ijk_SigTRAP:
+      case Ijk_SigSEGV:
+      case Ijk_Sys_syscall: {
+         HReg dst = iselIntExpr_R(env, next);
+         LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);
+         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, jk));
+         return;
+      }
+      default:
+         break;
+   }
+
+   vex_printf("\n-- PUT(%d) = ", offsIP);
+   ppIRExpr(next);
+   vex_printf("; exit-");
+   ppIRJumpKind(jk);
+   vex_printf("\n");
+   vassert(0); // are we expecting any other kind?
 }
 
 
