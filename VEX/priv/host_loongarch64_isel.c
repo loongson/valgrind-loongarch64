@@ -752,6 +752,44 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
                return dst;
             }
+            case Iop_DivModS32to32: {
+               HReg            dst = newVRegI(env);
+               HReg            tmp = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               HReg           src2 = iselIntExpr_R(env, e->Iex.Binop.arg2);
+               LOONGARCH64RI*  ri1 = LOONGARCH64RI_I(0, 5, False);
+               LOONGARCH64RI*  ri2 = LOONGARCH64RI_R(src2);
+               LOONGARCH64RI*  ri3 = LOONGARCH64RI_I(32, 6, False);
+               LOONGARCH64RI*  ri4 = LOONGARCH64RI_R(tmp);
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri1, src1, src1));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri1, src2, src2));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_DIV_W, ri2, src1, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_MOD_W, ri2, src1, tmp));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri3, tmp, tmp));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri3, dst, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRLI_D, ri3, dst, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri4, dst, dst));
+               return dst;
+            }
+            case Iop_DivModU32to32: {
+               HReg            dst = newVRegI(env);
+               HReg            tmp = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               HReg           src2 = iselIntExpr_R(env, e->Iex.Binop.arg2);
+               LOONGARCH64RI*  ri1 = LOONGARCH64RI_I(0, 5, False);
+               LOONGARCH64RI*  ri2 = LOONGARCH64RI_R(src2);
+               LOONGARCH64RI*  ri3 = LOONGARCH64RI_I(32, 6, False);
+               LOONGARCH64RI*  ri4 = LOONGARCH64RI_R(tmp);
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri1, src1, src1));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri1, src2, src2));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_DIV_WU, ri2, src1, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_MOD_WU, ri2, src1, tmp));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri3, tmp, tmp));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri3, dst, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRLI_D, ri3, dst, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri4, dst, dst));
+               return dst;
+            }
             case Iop_DivS32: {
                HReg            dst = newVRegI(env);
                HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
