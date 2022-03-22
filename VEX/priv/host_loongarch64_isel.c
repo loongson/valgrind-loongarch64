@@ -1751,6 +1751,14 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
       /* --------- BINARY OP --------- */
       case Iex_Binop: {
          switch (e->Iex.Binop.op) {
+            case Iop_F64toF32: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
+               set_rounding_mode(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FCVT_S_D, src, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
             case Iop_MaxNumF32: {
                HReg  dst = newVRegF(env);
                HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
@@ -1813,6 +1821,12 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                HReg dst = newVRegF(env);
                HReg src = iselFltExpr(env, e->Iex.Unop.arg);
                addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FABS_D, src, dst));
+               return dst;
+            }
+            case Iop_F32toF64: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FCVT_D_S, src, dst));
                return dst;
             }
             case Iop_NegF32: {
