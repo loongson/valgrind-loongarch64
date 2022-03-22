@@ -901,6 +901,21 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_Binary(LAbin_ANDI, ri, src, dst));
                return dst;
             }
+            case Iop_32Sto64: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               LOONGARCH64RI* ri = LOONGARCH64RI_I(0, 5, False);
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri, src, dst));
+               return dst;
+            }
+            case Iop_32Uto64: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               LOONGARCH64RI* ri = LOONGARCH64RI_I(32, 6, False);
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri, src, dst));
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRLI_D, ri, dst, dst));
+               return dst;
+            }
             case Iop_8Sto64: {
                HReg dst = newVRegI(env);
                HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
