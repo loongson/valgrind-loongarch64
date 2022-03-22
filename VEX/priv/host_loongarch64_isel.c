@@ -854,6 +854,16 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
       /* --------- UNARY OP --------- */
       case Iex_Unop: {
          switch (e->Iex.Unop.op) {
+            case Iop_128HIto64: {
+               HReg hi, lo;
+               iselInt128Expr(&hi, &lo, env, e->Iex.Unop.arg);
+               return hi;
+            }
+            case Iop_128to64: {
+               HReg hi, lo;
+               iselInt128Expr(&hi, &lo, env, e->Iex.Unop.arg);
+               return lo;
+            }
             case Iop_16Sto64: {
                HReg dst = newVRegI(env);
                HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
