@@ -1775,6 +1775,24 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                set_rounding_mode_default(env);
                return dst;
             }
+            case Iop_ScaleBF32: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FSCALEB_S, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_ScaleBF64: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FSCALEB_D, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
             case Iop_SubF32: {
                HReg  dst = newVRegF(env);
                HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
@@ -1836,6 +1854,22 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVGR2FR_D, src, tmp));
                set_rounding_mode(env, e->Iex.Binop.arg1);
                addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FFINT_D_L, tmp, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_LogBF32: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
+               set_rounding_mode(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FLOGB_S, src, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_LogBF64: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
+               set_rounding_mode(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FLOGB_D, src, dst));
                set_rounding_mode_default(env);
                return dst;
             }
@@ -1908,6 +1942,22 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
                set_rounding_mode(env, e->Iex.Binop.arg1);
                addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FRINT_D, src, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_RSqrtF32: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
+               set_rounding_mode(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FRSQRT_S, src, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_RSqrtF64: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Binop.arg2);
+               set_rounding_mode(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FRSQRT_D, src, dst));
                set_rounding_mode_default(env);
                return dst;
             }
