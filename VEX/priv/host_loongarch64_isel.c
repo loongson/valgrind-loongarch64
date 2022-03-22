@@ -806,6 +806,20 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
       /* --------- UNARY OP --------- */
       case Iex_Unop: {
          switch (e->Iex.Unop.op) {
+            case Iop_Not32: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               LOONGARCH64RI* ri = LOONGARCH64RI_R(hregZERO());
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_NOR, ri, src, dst));
+               return dst;
+            }
+            case Iop_Not64: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               LOONGARCH64RI* ri = LOONGARCH64RI_R(hregZERO());
+               addInstr(env, LOONGARCH64Instr_Binary(LAbin_NOR, ri, src, dst));
+               return dst;
+            }
             default:
                goto irreducible;
          }
