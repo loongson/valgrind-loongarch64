@@ -736,6 +736,38 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
                return dst;
             }
+            case Iop_And32: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_AND : LAbin_ANDI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
+               return dst;
+            }
+            case Iop_And64: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_AND : LAbin_ANDI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
+               return dst;
+            }
+            case Iop_Or32: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_OR : LAbin_ORI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
+               return dst;
+            }
+            case Iop_Or64: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_OR : LAbin_ORI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
+               return dst;
+            }
             case Iop_Sub32: {
                HReg            dst = newVRegI(env);
                HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
@@ -748,6 +780,22 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
                LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 0, False);
                addInstr(env, LOONGARCH64Instr_Binary(LAbin_SUB_D, src2, src1, dst));
+               return dst;
+            }
+            case Iop_Xor32: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_XOR : LAbin_XORI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
+               return dst;
+            }
+            case Iop_Xor64: {
+               HReg            dst = newVRegI(env);
+               HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+               LOONGARCH64RI* src2 = iselIntExpr_RI(env, e->Iex.Binop.arg2, 12, False);
+               LOONGARCH64BinOp op = (src2->tag == LAri_Reg) ? LAbin_XOR : LAbin_XORI;
+               addInstr(env, LOONGARCH64Instr_Binary(op, src2, src1, dst));
                return dst;
             }
             default:
