@@ -1412,6 +1412,16 @@ static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
    }
 
    if (e->tag == Iex_Binop) {
+      if (e->Iex.Binop.op == Iop_Or1) {
+         HReg           src1 = iselCondCode_R(env, e->Iex.Binop.arg1);
+         HReg           src2 = iselCondCode_R(env, e->Iex.Binop.arg2);
+         LOONGARCH64RI*   ri = LOONGARCH64RI_R(src2);
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri, src1, *dst));
+         *cc = LAcc_EQ;
+         store_guest_COND(env, *dst);
+         return;
+      }
+
       Bool extend  = False;
       Bool reverse = False;
       switch (e->Iex.Binop.op) {
