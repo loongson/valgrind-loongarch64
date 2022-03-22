@@ -540,6 +540,60 @@ static void iselStmtTmp ( ISelEnv* env, IRStmt* stmt )
    }
 }
 
+static void iselStmtDirty ( ISelEnv* env, IRStmt* stmt )
+{
+   IRDirty* d = stmt->Ist.Dirty.details;
+
+   /* Figure out the return type, if any. */
+   IRType retty = Ity_INVALID;
+   if (d->tmp != IRTemp_INVALID)
+      retty = typeOfIRTemp(env->type_env, d->tmp);
+
+   Bool retty_ok = False;
+   switch (retty) {
+      case Ity_INVALID: /* function doesn't return anything */
+      case Ity_I8: case Ity_I16: case Ity_I32: case Ity_I64:
+         retty_ok = True;
+         break;
+      default:
+         break;
+   }
+   if (!retty_ok)
+      vpanic("iselStmt(loongarch64): Ist_Dirty");
+
+   /* Marshal args, do the call, and set the return value to 0x555..555
+      if this is a conditional call that returns a value and the
+      call is skipped. */
+   UInt   addToSp = 0;
+   RetLoc rloc    = mk_RetLoc_INVALID();
+   doHelperCall(&addToSp, &rloc, env, d->guard, d->cee, retty, d->args);
+   vassert(is_sane_RetLoc(rloc));
+
+   /* Now figure out what to do with the returned value, if any. */
+   switch (retty) {
+      case Ity_INVALID: {
+         /* No return value.  Nothing to do. */
+         vassert(d->tmp == IRTemp_INVALID);
+         vassert(rloc.pri == RLPri_None);
+         vassert(addToSp == 0);
+         break;
+      }
+      case Ity_I8: case Ity_I16: case Ity_I32: case Ity_I64: {
+         vassert(rloc.pri == RLPri_Int);
+         vassert(addToSp == 0);
+         /* The returned value is in $a0.  Park it in the register
+            associated with tmp. */
+         HReg dst = lookupIRTemp(env, d->tmp);
+         addInstr(env, LOONGARCH64Instr_Move(dst, hregLOONGARCH64_R4()));
+         break;
+      }
+      default:
+         /*NOTREACHED*/
+         vassert(0);
+         break;
+   }
+}
+
 static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
 {
    if (stmt->Ist.Exit.dst->tag != Ico_U64)
@@ -613,6 +667,12 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       /* assign value to temporary */
       case Ist_WrTmp:
          iselStmtTmp(env, stmt);
+         break;
+
+      /* --------- Call to DIRTY helper --------- */
+      /* call complex ("dirty") helper function */
+      case Ist_Dirty:
+         iselStmtDirty(env, stmt);
          break;
 
       /* --------- INSTR MARK --------- */
