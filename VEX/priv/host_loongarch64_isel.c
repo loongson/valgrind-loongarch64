@@ -922,6 +922,16 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_Binary(LAbin_DIV_DU, src2, src1, dst));
                return dst;
             }
+            case Iop_CmpF32: {
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               return convert_cond_to_IR(env, src2, src1, False);
+            }
+            case Iop_CmpF64: {
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               return convert_cond_to_IR(env, src2, src1, True);
+            }
             case Iop_MullS32: {
                HReg            dst = newVRegI(env);
                HReg           src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
