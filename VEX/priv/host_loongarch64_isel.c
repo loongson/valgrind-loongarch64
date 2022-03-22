@@ -1789,6 +1789,18 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FABS_D, src, dst));
                return dst;
             }
+            case Iop_NegF32: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FNEG_S, src, dst));
+               return dst;
+            }
+            case Iop_NegF64: {
+               HReg dst = newVRegF(env);
+               HReg src = iselFltExpr(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpUnary(LAfpun_FNEG_D, src, dst));
+               return dst;
+            }
             case Iop_ReinterpI32asF32: {
                HReg dst = newVRegF(env);
                HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
