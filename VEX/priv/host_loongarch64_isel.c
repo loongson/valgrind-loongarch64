@@ -1709,6 +1709,18 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
       /* --------- UNARY OP --------- */
       case Iex_Unop: {
          switch (e->Iex.Unop.op) {
+            case Iop_ReinterpI32asF32: {
+               HReg dst = newVRegF(env);
+               HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVGR2FR_W, src, dst));
+               return dst;
+            }
+            case Iop_ReinterpI64asF64: {
+               HReg dst = newVRegF(env);
+               HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVGR2FR_D, src, dst));
+               return dst;
+            }
             default:
                goto irreducible;
          }
