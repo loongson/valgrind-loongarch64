@@ -1627,6 +1627,42 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                set_rounding_mode_default(env);
                return dst;
             }
+            case Iop_DivF32: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FDIV_S, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_DivF64: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FDIV_D, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_MulF32: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMUL_S, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
+            case Iop_MulF64: {
+               HReg  dst = newVRegF(env);
+               HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
+               HReg src2 = iselFltExpr(env, e->Iex.Triop.details->arg3);
+               set_rounding_mode(env, e->Iex.Triop.details->arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMUL_D, src2, src1, dst));
+               set_rounding_mode_default(env);
+               return dst;
+            }
             case Iop_SubF32: {
                HReg  dst = newVRegF(env);
                HReg src1 = iselFltExpr(env, e->Iex.Triop.details->arg2);
