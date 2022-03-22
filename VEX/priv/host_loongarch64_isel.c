@@ -1230,6 +1230,111 @@ static HReg iselCondCode_R ( ISelEnv* env, IRExpr* e )
 static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
                                LOONGARCH64CondCode* cc, HReg* dst )
 {
+   vassert(e);
+   vassert(typeOfIRExpr(env->type_env, e) == Ity_I1);
+
+   /* var */
+   if (e->tag == Iex_RdTmp) {
+      HReg tmp = newVRegI(env);
+      *dst = lookupIRTemp(env, e->Iex.RdTmp.tmp);
+      *cc = LAcc_EQ;
+      addInstr(env, LOONGARCH64Instr_LI(1, tmp));
+      addInstr(env, LOONGARCH64Instr_Cmp(*cc, *dst, tmp, *dst));
+      store_guest_COND(env, *dst);
+      return;
+   }
+
+   /* const */
+   if (e->tag == Iex_Const && e->Iex.Const.con->tag == Ico_U1) {
+      UInt imm = e->Iex.Const.con->Ico.U1;
+      addInstr(env, LOONGARCH64Instr_LI(imm, *dst));
+      *cc = LAcc_EQ;
+      store_guest_COND(env, *dst);
+      return;
+   }
+
+   if (e->tag == Iex_Binop) {
+      Bool extend  = False;
+      Bool reverse = False;
+      switch (e->Iex.Binop.op) {
+         case Iop_CasCmpEQ32:
+            *cc = LAcc_EQ;
+            break;
+         case Iop_CasCmpEQ64:
+            *cc = LAcc_EQ;
+            break;
+         case Iop_CasCmpNE32:
+            *cc = LAcc_NE;
+            break;
+         case Iop_CasCmpNE64:
+            *cc = LAcc_NE;
+            break;
+         case Iop_CmpEQ32:
+            *cc = LAcc_EQ;
+            break;
+         case Iop_CmpEQ64:
+            *cc = LAcc_EQ;
+            break;
+         case Iop_CmpLE32S:
+            *cc = LAcc_GE;
+            reverse = True;
+            break;
+         case Iop_CmpLE32U:
+            *cc = LAcc_GEU;
+            reverse = True;
+            break;
+         case Iop_CmpLE64S:
+            *cc = LAcc_GE;
+            reverse = True;
+            break;
+         case Iop_CmpLE64U:
+            *cc = LAcc_GEU;
+            reverse = True;
+            break;
+         case Iop_CmpLT32S:
+            *cc = LAcc_LT;
+            extend = True;
+            break;
+         case Iop_CmpLT32U:
+            *cc = LAcc_LTU;
+            extend = True;
+            break;
+         case Iop_CmpLT64S:
+            *cc = LAcc_LT;
+            break;
+         case Iop_CmpLT64U:
+            *cc = LAcc_LTU;
+            break;
+         case Iop_CmpNE32:
+            *cc = LAcc_NE;
+            break;
+         case Iop_CmpNE64:
+            *cc = LAcc_NE;
+            break;
+         default:
+            goto irreducible;
+      }
+      HReg src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+      HReg src2 = iselIntExpr_R(env, e->Iex.Binop.arg2);
+      if (extend) {
+         /* Sign-extend */
+         LOONGARCH64RI* ri = LOONGARCH64RI_I(0, 5, False);
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri, src1, src1));
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri, src2, src2));
+      }
+      if (reverse) {
+         addInstr(env, LOONGARCH64Instr_Cmp(*cc, src1, src2, *dst));
+      } else {
+         addInstr(env, LOONGARCH64Instr_Cmp(*cc, src2, src1, *dst));
+      }
+      store_guest_COND(env, *dst);
+      return;
+   }
+
+   /* We get here if no pattern matched. */
+irreducible:
+   ppIRExpr(e);
+   vpanic("iselCondCode(loongarch64): cannot reduce tree");
 }
 
 
