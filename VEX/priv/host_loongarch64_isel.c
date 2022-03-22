@@ -212,6 +212,102 @@ static void store_guest_COND ( ISelEnv* env, HReg src )
    addInstr(env, LOONGARCH64Instr_Store(LAstore_ST_W, am, src));
 }
 
+/* Set floating point rounding mode */
+static void set_rounding_mode ( ISelEnv* env, IRExpr* mode )
+{
+   /*
+      rounding mode | LOONGARCH | IR
+      ------------------------------
+      to nearest    | 00        | 00
+      to zero       | 01        | 11
+      to +infinity  | 10        | 10
+      to -infinity  | 11        | 01
+   */
+
+   /* rm = XOR(rm, (rm << 1)) & 3 */
+   HReg            rm = iselIntExpr_R(env, mode);
+   HReg           tmp = newVRegI(env);
+   LOONGARCH64RI*  ri = LOONGARCH64RI_I(1, 5, False);
+   LOONGARCH64RI* ri2 = LOONGARCH64RI_R(rm);
+   LOONGARCH64RI* ri3 = LOONGARCH64RI_I(3, 12, False);
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri, rm, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_XOR, ri2, tmp, rm));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ANDI, ri3, rm, rm));
+
+   /* Save old value of FCSR3 */
+   HReg fcsr = newVRegI(env);
+   addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVFCSR2GR,
+                                         hregLOONGARCH64_FCSR3(), fcsr));
+
+   /* Store old FCSR3 to stack */
+   LOONGARCH64RI* ri4 = LOONGARCH64RI_I(-4 & 0xfff, 12, True);
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ADDI_D, ri4, hregSP(), hregSP()));
+   LOONGARCH64AMode* am = LOONGARCH64AMode_RI(hregSP(), 0);
+   addInstr(env, LOONGARCH64Instr_Store(LAstore_ST_W, am, fcsr));
+
+   /* Set new value of FCSR3 */
+   LOONGARCH64RI* ri5 = LOONGARCH64RI_I(8, 5, False);
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri5, rm, rm));
+   addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVGR2FCSR,
+                                         rm, hregLOONGARCH64_FCSR3()));
+}
+
+static void set_rounding_mode_default ( ISelEnv* env )
+{
+   /* Load old FCSR3 from stack */
+   HReg fcsr = newVRegI(env);
+   LOONGARCH64AMode* am = LOONGARCH64AMode_RI(hregSP(), 0);
+   addInstr(env, LOONGARCH64Instr_Load(LAload_LD_WU, am, fcsr));
+
+   /* Restore SP */
+   LOONGARCH64RI* ri = LOONGARCH64RI_I(4, 12, True);
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ADDI_D, ri, hregSP(), hregSP()));
+
+   /* Set new value of FCSR3 */
+   addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVGR2FCSR,
+                                         fcsr, hregLOONGARCH64_FCSR3()));
+}
+
+/* Convert LOONGARCH FCMP cond to IR result */
+static HReg convert_cond_to_IR ( ISelEnv* env, HReg src2, HReg src1, Bool size64 )
+{
+   HReg tmp = newVRegI(env);
+   HReg dst = newVRegI(env);
+
+   LOONGARCH64RI* ri1 = LOONGARCH64RI_I(63, 6, False);
+   LOONGARCH64RI* ri2 = LOONGARCH64RI_I(0x45, 12, False);
+   if (size64)
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CUN_D, src2, src1, tmp));
+   else
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CUN_S, src2, src1, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRAI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ANDI, ri2, tmp, dst));
+
+   LOONGARCH64RI* ri3 = LOONGARCH64RI_I(0x1, 12, False);
+   LOONGARCH64RI* ri4 = LOONGARCH64RI_R(tmp);
+   if (size64)
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CLT_D, src2, src1, tmp));
+   else
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CLT_S, src2, src1, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRAI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ANDI, ri3, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri4, dst, dst));
+
+   LOONGARCH64RI* ri5 = LOONGARCH64RI_I(0x40, 12, False);
+   if (size64)
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CEQ_D, src2, src1, tmp));
+   else
+      addInstr(env, LOONGARCH64Instr_FpCmp(LAfpcmp_FCMP_CEQ_S, src2, src1, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_SRAI_D, ri1, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_ANDI, ri5, tmp, tmp));
+   addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri4, dst, dst));
+
+   return dst;
+}
+
 
 /*---------------------------------------------------------*/
 /*--- ISEL: Function call helpers                       ---*/
@@ -1452,8 +1548,67 @@ static HReg iselFltExpr ( ISelEnv* env, IRExpr* e )
 /* DO NOT CALL THIS DIRECTLY */
 static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
 {
-   HReg r;
-   return r;
+   IRType ty = typeOfIRExpr(env->type_env, e);
+   vassert(e);
+   vassert(ty == Ity_F32 || ty == Ity_F64);
+
+   switch (e->tag) {
+      /* --------- TEMP --------- */
+      case Iex_RdTmp:
+         return lookupIRTemp(env, e->Iex.RdTmp.tmp);
+
+      /* --------- LOAD --------- */
+      case Iex_Load:
+         break;
+
+      /* --------- GET --------- */
+      case Iex_Get:
+         break;
+
+      /* --------- QUATERNARY OP --------- */
+      case Iex_Qop: {
+         switch (e->Iex.Qop.details->op) {
+            default:
+               goto irreducible;
+         }
+      }
+
+      /* --------- TERNARY OP --------- */
+      case Iex_Triop: {
+         switch (e->Iex.Triop.details->op) {
+            default:
+               goto irreducible;
+         }
+      }
+
+      /* --------- BINARY OP --------- */
+      case Iex_Binop: {
+         switch (e->Iex.Binop.op) {
+            default:
+               goto irreducible;
+         }
+      }
+
+      /* --------- UNARY OP --------- */
+      case Iex_Unop: {
+         switch (e->Iex.Unop.op) {
+            default:
+               goto irreducible;
+         }
+      }
+
+      /* --------- LITERAL --------- */
+      case Iex_Const:
+         break;
+
+      default:
+         break;
+   }
+
+   /* We get here if no pattern matched. */
+irreducible:
+   ppIRExpr(e);
+   vpanic("iselFltExpr(loongarch64): cannot reduce tree");
 }
 
 
