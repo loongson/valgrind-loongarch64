@@ -1183,6 +1183,18 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_Unary(LAun_CTZ_D, src, dst));
                return dst;
             }
+            case Iop_ReinterpF32asI32: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselFltExpr(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVFR2GR_S, src, dst));
+               return dst;
+            }
+            case Iop_ReinterpF64asI64: {
+               HReg          dst = newVRegI(env);
+               HReg          src = iselFltExpr(env, e->Iex.Unop.arg);
+               addInstr(env, LOONGARCH64Instr_FpMove(LAfpmove_MOVFR2GR_D, src, dst));
+               return dst;
+            }
             case Iop_Not32: {
                HReg          dst = newVRegI(env);
                HReg          src = iselIntExpr_R(env, e->Iex.Unop.arg);
