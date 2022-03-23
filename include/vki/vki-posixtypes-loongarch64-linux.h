@@ -30,10 +30,44 @@
 #define __VKI_POSIXTYPES_LOONGARCH64_LINUX_H
 
 //----------------------------------------------------------------------
-// From linux-5.17/include/uapi/asm-generic/posix_types.h
+// From linux-5.19-rc1/include/uapi/asm-generic/posix_types.h
 //----------------------------------------------------------------------
 
-/* TODO */
+typedef long                 __vki_kernel_long_t;
+typedef unsigned long        __vki_kernel_ulong_t;
+typedef __vki_kernel_ulong_t __vki_kernel_ino_t;
+typedef unsigned int         __vki_kernel_mode_t;
+typedef int                  __vki_kernel_pid_t;
+typedef int                  __vki_kernel_ipc_pid_t;
+typedef unsigned int         __vki_kernel_uid_t;
+typedef unsigned int         __vki_kernel_gid_t;
+typedef __vki_kernel_long_t  __vki_kernel_suseconds_t;
+typedef int                  __vki_kernel_daddr_t;
+typedef unsigned int         __vki_kernel_uid32_t;
+typedef unsigned int         __vki_kernel_gid32_t;
+typedef __vki_kernel_uid_t   __vki_kernel_old_uid_t;
+typedef __vki_kernel_gid_t   __vki_kernel_old_gid_t;
+typedef unsigned int         __vki_kernel_old_dev_t;
+
+typedef __vki_kernel_ulong_t __vki_kernel_size_t;
+typedef __vki_kernel_long_t  __vki_kernel_ssize_t;
+typedef __vki_kernel_long_t  __vki_kernel_ptrdiff_t;
+
+typedef struct {
+   int val[2];
+} __vki_kernel_fsid_t;
+
+typedef __vki_kernel_long_t  __vki_kernel_off_t;
+typedef long long            __vki_kernel_loff_t;
+typedef __vki_kernel_long_t  __vki_kernel_old_time_t;
+typedef __vki_kernel_long_t  __vki_kernel_time_t;
+typedef long long            __vki_kernel_time64_t;
+typedef __vki_kernel_long_t  __vki_kernel_clock_t;
+typedef int                  __vki_kernel_timer_t;
+typedef int                  __vki_kernel_clockid_t;
+typedef char *               __vki_kernel_caddr_t;
+typedef unsigned short       __vki_kernel_uid16_t;
+typedef unsigned short       __vki_kernel_gid16_t;
 
 #endif // __VKI_POSIXTYPES_LOONGARCH64_LINUX_H
 

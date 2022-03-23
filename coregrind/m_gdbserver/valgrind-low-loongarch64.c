@@ -21,4 +21,22 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.  */
 
-/* TODO */
+#include "server.h"
+#include "target.h"
+#include "regdef.h"
+#include "regcache.h"
+
+#include "pub_core_machine.h"
+#include "pub_core_debuginfo.h"
+#include "pub_core_threadstate.h"
+#include "pub_core_transtab.h"
+#include "pub_core_gdbserver.h"
+
+#include "valgrind_low.h"
+
+#include "libvex_guest_loongarch64.h"
+
+void loongarch64_init_architecture (struct valgrind_target_ops* target)
+{
+   /* TODO */
+}
