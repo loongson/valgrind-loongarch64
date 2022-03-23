@@ -1652,7 +1652,20 @@ void VG_(redir_initialise) ( void )
    }
 
 #elif defined(VGP_loongarch64_linux)
-   /* TODO */
+   /* If we're using memcheck, use these intercepts right from
+      the start, otherwise ld.so makes a lot of noise. */
+   if (0==VG_(strcmp)("Memcheck", VG_(details).name)) {
+      add_hardwired_spec(
+         "ld-linux-loongarch-lp64d.so.1", "strlen",
+         (Addr)&VG_(loongarch64_linux_REDIR_FOR_strlen),
+         complain_about_stripped_glibc_ldso
+      );
+      add_hardwired_spec(
+         "ld-linux-loongarch-lp64d.so.1", "index",
+         (Addr)&VG_(loongarch64_linux_REDIR_FOR_index),
+         complain_about_stripped_glibc_ldso
+      );
+   }
 
 #  elif defined(VGP_x86_solaris)
    /* If we're using memcheck, use these intercepts right from
