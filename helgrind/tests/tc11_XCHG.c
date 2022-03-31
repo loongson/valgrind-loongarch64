@@ -153,8 +153,8 @@
 #  define XCHG_M_R(_addr,_lval)                              \
    __asm__ __volatile__(                                     \
       "move $t0, %2 \n\t"                                    \
-      "ll.d $t1, %1 \n\t"                                    \
-      "sc.d $t0, %1 \n\t"                                    \
+      "ll.w $t1, %1 \n\t"                                    \
+      "sc.w $t0, %1 \n\t"                                    \
       "move %0, $t1 \n\t"                                    \
       : /*out*/ "=r"(_lval), "+m"(_addr)                     \
       : /*in*/  "r"(_lval)                                   \
