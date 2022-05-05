@@ -2380,6 +2380,7 @@ static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
       case Ijk_NoDecode:
       case Ijk_InvalICache:
       case Ijk_NoRedir:
+      case Ijk_SigILL:
       case Ijk_SigTRAP:
       case Ijk_SigSEGV:
       case Ijk_Sys_syscall: {
@@ -2530,6 +2531,7 @@ static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
       case Ijk_NoDecode:
       case Ijk_InvalICache:
       case Ijk_NoRedir:
+      case Ijk_SigILL:
       case Ijk_SigTRAP:
       case Ijk_SigSEGV:
       case Ijk_Sys_syscall: {
