@@ -2383,6 +2383,7 @@ static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
       case Ijk_SigILL:
       case Ijk_SigTRAP:
       case Ijk_SigSEGV:
+      case Ijk_SigBUS:
       case Ijk_Sys_syscall: {
          HReg dst = iselIntExpr_R(env, IRExpr_Const(stmt->Ist.Exit.dst));
          addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, cc, stmt->Ist.Exit.jk));
@@ -2534,6 +2535,7 @@ static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
       case Ijk_SigILL:
       case Ijk_SigTRAP:
       case Ijk_SigSEGV:
+      case Ijk_SigBUS:
       case Ijk_Sys_syscall: {
          HReg dst = iselIntExpr_R(env, next);
          LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);

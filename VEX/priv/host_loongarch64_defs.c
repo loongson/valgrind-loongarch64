@@ -2528,6 +2528,9 @@ static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
       case Ijk_SigSEGV:
          trcval = VEX_TRC_JMP_SIGSEGV;
          break;
+      case Ijk_SigBUS:
+         trcval = VEX_TRC_JMP_SIGBUS;
+         break;
       case Ijk_Sys_syscall:
          trcval = VEX_TRC_JMP_SYS_SYSCALL;
          break;
@@ -2540,7 +2543,6 @@ static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
          case Ijk_MapFail:
          case Ijk_FlushDCache:
          case Ijk_SigILL:
-         case Ijk_SigBUS:
          case Ijk_SigFPE:
          case Ijk_SigFPE_IntDiv:
          case Ijk_SigFPE_IntOvf:

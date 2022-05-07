@@ -446,6 +446,12 @@ static inline void gen_SIGSEGV ( IRExpr* cond )
    exit(cond, Ijk_SigSEGV, 4);
 }
 
+/* Generate a SIGBUS if the expression evaluates to true. */
+static inline void gen_SIGBUS ( IRExpr* cond )
+{
+   exit(cond, Ijk_SigBUS, 4);
+}
+
 static inline void cas ( IRTemp old, IRExpr* addr, IRExpr* expd, IRExpr* new )
 {
    IRCAS* c = mkIRCAS(IRTemp_INVALID, old, Iend_LE, addr,
@@ -2398,7 +2404,7 @@ static Bool gen_ld_h ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    putIReg(rd, extendS(Ity_I16, load(Ity_I16, addr)));
 
    return True;
@@ -2417,7 +2423,7 @@ static Bool gen_ld_w ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putIReg(rd, extendS(Ity_I32, load(Ity_I32, addr)));
 
    return True;
@@ -2436,7 +2442,7 @@ static Bool gen_ld_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    putIReg(rd, load(Ity_I64, addr));
 
    return True;
@@ -2472,7 +2478,7 @@ static Bool gen_st_h ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    store(addr, getIReg16(rd));
 
    return True;
@@ -2491,7 +2497,7 @@ static Bool gen_st_w ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    store(addr, getIReg32(rd));
 
    return True;
@@ -2510,7 +2516,7 @@ static Bool gen_st_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    store(addr, getIReg64(rd));
 
    return True;
@@ -2546,7 +2552,7 @@ static Bool gen_ld_hu ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    putIReg(rd, extendU(Ity_I16, load(Ity_I16, addr)));
 
    return True;
@@ -2565,7 +2571,7 @@ static Bool gen_ld_wu ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putIReg(rd, extendU(Ity_I32, load(Ity_I32, addr)));
 
    return True;
@@ -2599,7 +2605,7 @@ static Bool gen_ldx_h ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    putIReg(rd, extendS(Ity_I16, load(Ity_I16, addr)));
 
    return True;
@@ -2617,7 +2623,7 @@ static Bool gen_ldx_w ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putIReg(rd, extendS(Ity_I32, load(Ity_I32, addr)));
 
    return True;
@@ -2635,7 +2641,7 @@ static Bool gen_ldx_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    putIReg(rd, load(Ity_I64, addr));
 
    return True;
@@ -2669,7 +2675,7 @@ static Bool gen_stx_h ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    store(addr, getIReg16(rd));
 
    return True;
@@ -2687,7 +2693,7 @@ static Bool gen_stx_w ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    store(addr, getIReg32(rd));
 
    return True;
@@ -2705,7 +2711,7 @@ static Bool gen_stx_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    store(addr, getIReg64(rd));
 
    return True;
@@ -2739,7 +2745,7 @@ static Bool gen_ldx_hu ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+      gen_SIGBUS(check_align(addr, mkU64(0x1)));
    putIReg(rd, extendU(Ity_I16, load(Ity_I16, addr)));
 
    return True;
@@ -2757,7 +2763,7 @@ static Bool gen_ldx_wu ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putIReg(rd, extendU(Ity_I32, load(Ity_I32, addr)));
 
    return True;
@@ -2829,7 +2835,7 @@ static Bool gen_ldptr_w ( DisResult* dres, UInt insn,
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj),
                         mkU64(extend64(si14 << 2, 16)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putIReg(rd, extendS(Ity_I32, load(Ity_I32, addr)));
 
    return True;
@@ -2849,7 +2855,7 @@ static Bool gen_stptr_w ( DisResult* dres, UInt insn,
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj),
                         mkU64(extend64(si14 << 2, 16)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    store(addr, getIReg32(rd));
 
    return True;
@@ -2869,7 +2875,7 @@ static Bool gen_ldptr_d ( DisResult* dres, UInt insn,
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj),
                         mkU64(extend64(si14 << 2, 16)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    putIReg(rd, load(Ity_I64, addr));
 
    return True;
@@ -2889,7 +2895,7 @@ static Bool gen_stptr_d ( DisResult* dres, UInt insn,
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj),
                         mkU64(extend64(si14 << 2, 16)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    store(addr, getIReg64(rd));
 
    return True;
@@ -2931,7 +2937,7 @@ static Bool gen_ldgt_h ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+   gen_SIGBUS(check_align(addr, mkU64(0x1)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    putIReg(rd, extendS(Ity_I16, load(Ity_I16, addr)));
 
@@ -2953,7 +2959,7 @@ static Bool gen_ldgt_w ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    putIReg(rd, extendS(Ity_I32, load(Ity_I32, addr)));
 
@@ -2975,7 +2981,7 @@ static Bool gen_ldgt_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    putIReg(rd, load(Ity_I64, addr));
 
@@ -3018,7 +3024,7 @@ static Bool gen_ldle_h ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+   gen_SIGBUS(check_align(addr, mkU64(0x1)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    putIReg(rd, extendS(Ity_I16, load(Ity_I16, addr)));
 
@@ -3040,7 +3046,7 @@ static Bool gen_ldle_w ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    putIReg(rd, extendS(Ity_I32, load(Ity_I32, addr)));
 
@@ -3062,7 +3068,7 @@ static Bool gen_ldle_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    putIReg(rd, load(Ity_I64, addr));
 
@@ -3105,7 +3111,7 @@ static Bool gen_stgt_h ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+   gen_SIGBUS(check_align(addr, mkU64(0x1)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    store(addr, getIReg16(rd));
 
@@ -3127,7 +3133,7 @@ static Bool gen_stgt_w ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    store(addr, getIReg32(rd));
 
@@ -3149,7 +3155,7 @@ static Bool gen_stgt_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    store(addr, getIReg64(rd));
 
@@ -3192,7 +3198,7 @@ static Bool gen_stle_h ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x1)));
+   gen_SIGBUS(check_align(addr, mkU64(0x1)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    store(addr, getIReg16(rd));
 
@@ -3214,7 +3220,7 @@ static Bool gen_stle_w ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    store(addr, getIReg32(rd));
 
@@ -3236,7 +3242,7 @@ static Bool gen_stle_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    store(addr, getIReg64(rd));
 
@@ -3259,9 +3265,9 @@ static Bool gen_ll_helper ( UInt rd, UInt rj, UInt si14, Bool size64 )
    assign(addr, binop(Iop_Add64, getIReg64(rj),
                       mkU64(extend64(si14 << 2, 16))));
    if (size64)
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x7)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x7)));
    else
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x3)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x3)));
 
    /* Load the value. */
    IRTemp res = newTemp(Ity_I64);
@@ -3295,9 +3301,9 @@ static Bool gen_sc_helper ( UInt rd, UInt rj, UInt si14, Bool size64 )
    assign(addr, binop(Iop_Add64, getIReg64(rj),
                       mkU64(extend64(si14 << 2, 16))));
    if (size64)
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x7)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x7)));
    else
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x3)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x3)));
 
    /* Get new value. */
    IRTemp new;
@@ -3385,7 +3391,7 @@ static Bool gen_ll_w ( DisResult* dres, UInt insn,
       IRTemp addr = newTemp(Ity_I64);
       assign(addr, binop(Iop_Add64, getIReg64(rj),
                          mkU64(extend64(si14 << 2, 16))));
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x3)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x3)));
       stmt(IRStmt_LLSC(Iend_LE, res, mkexpr(addr), NULL/*LL*/));
       putIReg(rd, extendS(Ity_I32, mkexpr(res)));
       return True;
@@ -3412,7 +3418,7 @@ static Bool gen_sc_w ( DisResult* dres, UInt insn,
       IRTemp addr = newTemp(Ity_I64);
       assign(addr, binop(Iop_Add64, getIReg64(rj),
                          mkU64(extend64(si14 << 2, 16))));
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x3)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x3)));
       stmt(IRStmt_LLSC(Iend_LE, res, mkexpr(addr), getIReg32(rd)));
       return True;
    }
@@ -3438,7 +3444,7 @@ static Bool gen_ll_d ( DisResult* dres, UInt insn,
       IRTemp addr = newTemp(Ity_I64);
       assign(addr, binop(Iop_Add64, getIReg64(rj),
                          mkU64(extend64(si14 << 2, 16))));
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x7)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x7)));
       stmt(IRStmt_LLSC(Iend_LE, res, mkexpr(addr), NULL/*LL*/));
       putIReg(rd, mkexpr(res));
       return True;
@@ -3465,7 +3471,7 @@ static Bool gen_sc_d ( DisResult* dres, UInt insn,
       IRTemp addr = newTemp(Ity_I64);
       assign(addr, binop(Iop_Add64, getIReg64(rj),
                          mkU64(extend64(si14 << 2, 16))));
-      gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x7)));
+      gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x7)));
       stmt(IRStmt_LLSC(Iend_LE, res, mkexpr(addr), getIReg64(rd)));
       return True;
    }
@@ -3483,7 +3489,7 @@ static Bool gen_am_w_helper ( enum amop op, Bool fence,
 
    IRTemp addr = newTemp(Ity_I64);
    assign(addr, getIReg64(rj));
-   gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x3)));
+   gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x3)));
 
    IRTemp o = newTemp(Ity_I32);
    assign(o, load(Ity_I32, mkexpr(addr)));
@@ -3550,7 +3556,7 @@ static Bool gen_am_d_helper ( enum amop op, Bool fence,
 
    IRTemp addr = newTemp(Ity_I64);
    assign(addr, getIReg64(rj));
-   gen_SIGSEGV(check_align(mkexpr(addr), mkU64(0x7)));
+   gen_SIGBUS(check_align(mkexpr(addr), mkU64(0x7)));
 
    IRTemp o = newTemp(Ity_I64);
    assign(o, load(Ity_I64, mkexpr(addr)));
@@ -7527,7 +7533,7 @@ static Bool gen_fld_s ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putFReg32(fd, load(Ity_F32, addr));
 
    return True;
@@ -7552,7 +7558,7 @@ static Bool gen_fst_s ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    store(addr, getFReg32(fd));
 
    return True;
@@ -7577,7 +7583,7 @@ static Bool gen_fld_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    putFReg64(fd, load(Ity_F64, addr));
 
    return True;
@@ -7602,7 +7608,7 @@ static Bool gen_fst_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), mkU64(extend64(si12, 12)));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    store(addr, getFReg64(fd));
 
    return True;
@@ -7626,7 +7632,7 @@ static Bool gen_fldx_s ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    putFReg32(fd, load(Ity_F32, addr));
 
    return True;
@@ -7650,7 +7656,7 @@ static Bool gen_fldx_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    putFReg64(fd, load(Ity_F64, addr));
 
    return True;
@@ -7674,7 +7680,7 @@ static Bool gen_fstx_s ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+      gen_SIGBUS(check_align(addr, mkU64(0x3)));
    store(addr, getFReg32(fd));
 
    return True;
@@ -7698,7 +7704,7 @@ static Bool gen_fstx_d ( DisResult* dres, UInt insn,
 
    IRExpr* addr = binop(Iop_Add64, getIReg64(rj), getIReg64(rk));
    if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_UAL))
-      gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+      gen_SIGBUS(check_align(addr, mkU64(0x7)));
    store(addr, getFReg64(fd));
 
    return True;
@@ -7725,7 +7731,7 @@ static Bool gen_fldgt_s ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    putFReg32(fd, load(Ity_F32, addr));
 
@@ -7753,7 +7759,7 @@ static Bool gen_fldgt_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    putFReg64(fd, load(Ity_F64, addr));
 
@@ -7781,7 +7787,7 @@ static Bool gen_fldle_s ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    putFReg64(fd, extendS(Ity_F32, load(Ity_F32, addr)));
 
@@ -7809,7 +7815,7 @@ static Bool gen_fldle_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    putFReg64(fd, load(Ity_F64, addr));
 
@@ -7837,7 +7843,7 @@ static Bool gen_fstgt_s ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    store(addr, getFReg32(fd));
 
@@ -7865,7 +7871,7 @@ static Bool gen_fstgt_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLE64U, mkexpr(tmp1), mkexpr(tmp2)));
    store(addr, getFReg64(fd));
 
@@ -7893,7 +7899,7 @@ static Bool gen_fstle_s ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x3)));
+   gen_SIGBUS(check_align(addr, mkU64(0x3)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    store(addr, getFReg32(fd));
 
@@ -7921,7 +7927,7 @@ static Bool gen_fstle_d ( DisResult* dres, UInt insn,
    IRTemp tmp2 = newTemp(Ity_I64);
    assign(tmp2, getIReg64(rk));
    IRExpr* addr = binop(Iop_Add64, mkexpr(tmp1), mkexpr(tmp2));
-   gen_SIGSEGV(check_align(addr, mkU64(0x7)));
+   gen_SIGBUS(check_align(addr, mkU64(0x7)));
    gen_SIGSEGV(binop(Iop_CmpLT64U, mkexpr(tmp2), mkexpr(tmp1)));
    store(addr, getFReg64(fd));
 
