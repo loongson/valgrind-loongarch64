@@ -1839,11 +1839,25 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                set_rounding_mode_default(env);
                return dst;
             }
+            case Iop_MaxNumAbsF32: {
+               HReg  dst = newVRegF(env);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMAXA_S, src2, src1, dst));
+               return dst;
+            }
             case Iop_MaxNumF32: {
                HReg  dst = newVRegF(env);
                HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
                HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
                addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMAX_S, src2, src1, dst));
+               return dst;
+            }
+            case Iop_MaxNumAbsF64: {
+               HReg  dst = newVRegF(env);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMAXA_D, src2, src1, dst));
                return dst;
             }
             case Iop_MaxNumF64: {
@@ -1853,11 +1867,25 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
                addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMAX_D, src2, src1, dst));
                return dst;
             }
+            case Iop_MinNumAbsF32: {
+               HReg  dst = newVRegF(env);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMINA_S, src2, src1, dst));
+               return dst;
+            }
             case Iop_MinNumF32: {
                HReg  dst = newVRegF(env);
                HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
                HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
                addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMIN_S, src2, src1, dst));
+               return dst;
+            }
+            case Iop_MinNumAbsF64: {
+               HReg  dst = newVRegF(env);
+               HReg src2 = iselFltExpr(env, e->Iex.Binop.arg2);
+               HReg src1 = iselFltExpr(env, e->Iex.Binop.arg1);
+               addInstr(env, LOONGARCH64Instr_FpBinary(LAfpbin_FMINA_D, src2, src1, dst));
                return dst;
             }
             case Iop_MinNumF64: {
