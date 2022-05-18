@@ -4742,7 +4742,10 @@ static Bool gen_fmaxa_s ( DisResult* dres, UInt insn,
 
    DIP("fmaxa.s %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
 
-   return False;
+   calculateFCSR(FMAXA_S, 2, fj, fk, 0);
+   putFReg32(fd, binop(Iop_MaxNumAbsF32, getFReg32(fj), getFReg32(fk)));
+
+   return True;
 }
 
 static Bool gen_fmaxa_d ( DisResult* dres, UInt insn,
@@ -4755,7 +4758,10 @@ static Bool gen_fmaxa_d ( DisResult* dres, UInt insn,
 
    DIP("fmaxa.d %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
 
-   return False;
+   calculateFCSR(FMAXA_D, 2, fj, fk, 0);
+   putFReg64(fd, binop(Iop_MaxNumAbsF64, getFReg64(fj), getFReg64(fk)));
+
+   return True;
 }
 
 static Bool gen_fmina_s ( DisResult* dres, UInt insn,
@@ -4768,7 +4774,10 @@ static Bool gen_fmina_s ( DisResult* dres, UInt insn,
 
    DIP("fmina.s %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
 
-   return False;
+   calculateFCSR(FMINA_S, 2, fj, fk, 0);
+   putFReg32(fd, binop(Iop_MinNumAbsF32, getFReg32(fj), getFReg32(fk)));
+
+   return True;
 }
 
 static Bool gen_fmina_d ( DisResult* dres, UInt insn,
@@ -4781,7 +4790,10 @@ static Bool gen_fmina_d ( DisResult* dres, UInt insn,
 
    DIP("fmina.d %s, %s, %s\n", nameFReg(fd), nameFReg(fj), nameFReg(fk));
 
-   return False;
+   calculateFCSR(FMINA_D, 2, fj, fk, 0);
+   putFReg64(fd, binop(Iop_MinNumAbsF64, getFReg64(fj), getFReg64(fk)));
+
+   return True;
 }
 
 static Bool gen_fabs_s ( DisResult* dres, UInt insn,
