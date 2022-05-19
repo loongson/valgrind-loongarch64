@@ -2806,7 +2806,13 @@ static Bool gen_ibar ( DisResult* dres, UInt insn,
                        const VexArchInfo* archinfo,
                        const VexAbiInfo* abiinfo )
 {
-   return False;
+   UInt hint = get_hint15(insn);
+
+   DIP("ibar %u\n", hint);
+
+   stmt(IRStmt_MBE(Imbe_InsnFence));
+
+   return True;
 }
 
 static Bool gen_ldptr_w ( DisResult* dres, UInt insn,
