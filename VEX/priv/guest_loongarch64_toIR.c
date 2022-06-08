@@ -4474,7 +4474,22 @@ static Bool gen_break ( DisResult* dres, UInt insn,
 
    putPC(mkU64(guest_PC_curr_instr + 4));
 
-   dres->jk_StopHere = Ijk_SigTRAP;
+   /* On LoongArch, most instructions do not raise exceptions;
+      instead, gcc notifies the kernel with a trap instruction.
+      We simulate the behavior of the linux kernel here.
+      See arch/loongarch/kernel/traps.c.
+    */
+   switch (code) {
+      case 6: /* BRK_OVERFLOW */
+         dres->jk_StopHere = Ijk_SigFPE_IntOvf;
+         break;
+      case 7: /* BRK_DIVZERO */
+         dres->jk_StopHere = Ijk_SigFPE_IntDiv;
+         break;
+      default:
+         dres->jk_StopHere = Ijk_SigTRAP;
+         break;
+   }
    dres->whatNext    = Dis_StopHere;
 
    return True;
