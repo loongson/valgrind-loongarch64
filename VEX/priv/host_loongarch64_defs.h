@@ -507,7 +507,7 @@ typedef struct {
          HReg                 src2;
       } Cmp;
       struct {
-         LOONGARCH64CondCode  cond;
+         HReg                 cond;
          Addr64               target;
          UInt                 nArgRegs;
          RetLoc               rloc;
@@ -515,18 +515,18 @@ typedef struct {
       struct {
          Addr64               dstGA;
          LOONGARCH64AMode*    amPC;
-         LOONGARCH64CondCode  cond;
+         HReg                 cond;
          Bool                 toFastEP;
       } XDirect;
       struct {
          HReg                 dstGA;
          LOONGARCH64AMode*    amPC;
-         LOONGARCH64CondCode  cond;
+         HReg                 cond;
       } XIndir;
       struct {
          HReg                 dstGA;
          LOONGARCH64AMode*    amPC;
-         LOONGARCH64CondCode  cond;
+         HReg                 cond;
          IRJumpKind           jk;
       } XAssisted;
       struct {
@@ -584,21 +584,17 @@ extern LOONGARCH64Instr* LOONGARCH64Instr_Cas       ( HReg old, HReg addr,
 extern LOONGARCH64Instr* LOONGARCH64Instr_Cmp       ( LOONGARCH64CondCode cond,
                                                       HReg src2, HReg src1,
                                                       HReg dst );
-extern LOONGARCH64Instr* LOONGARCH64Instr_Call      ( LOONGARCH64CondCode cond,
-                                                      Addr64 target,
-                                                      UInt nArgRegs,
-                                                      RetLoc rloc );
+extern LOONGARCH64Instr* LOONGARCH64Instr_Call      ( HReg cond, Addr64 target,
+                                                      UInt nArgRegs, RetLoc rloc );
 extern LOONGARCH64Instr* LOONGARCH64Instr_XDirect   ( Addr64 dstGA,
                                                       LOONGARCH64AMode* amPC,
-                                                      LOONGARCH64CondCode cond,
-                                                      Bool toFastEP );
+                                                      HReg cond, Bool toFastEP );
 extern LOONGARCH64Instr* LOONGARCH64Instr_XIndir    ( HReg dstGA,
                                                       LOONGARCH64AMode* amPC,
-                                                      LOONGARCH64CondCode cond );
+                                                      HReg cond );
 extern LOONGARCH64Instr* LOONGARCH64Instr_XAssisted ( HReg dstGA,
                                                       LOONGARCH64AMode* amPC,
-                                                      LOONGARCH64CondCode cond,
-                                                      IRJumpKind jk );
+                                                      HReg cond, IRJumpKind jk );
 extern LOONGARCH64Instr* LOONGARCH64Instr_EvCheck   ( LOONGARCH64AMode* amCounter,
                                                       LOONGARCH64AMode* amFailAddr );
 extern LOONGARCH64Instr* LOONGARCH64Instr_ProfInc   ( void );

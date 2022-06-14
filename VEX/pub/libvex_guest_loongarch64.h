@@ -126,16 +126,14 @@ typedef
       /*  542 */ UChar guest_FCC6;
       /*  543 */ UChar guest_FCC7;
       /*  544 */ UInt  guest_FCSR;  /* FP Control and Status Register */
-      /*  548 */ UInt  _padding1;
 
       /* Various pseudo-regs mandated by Vex or Valgrind. */
       /* Emulation notes */
-      /*  552 */ UInt  guest_EMNOTE;
-      /*  556 */ UInt  guest_COND;
+      /*  548 */ UInt  guest_EMNOTE;
 
       /* For clflush: record start and length of area to invalidate */
-      /*  560 */ ULong guest_CMSTART;
-      /*  568 */ ULong guest_CMLEN;
+      /*  552 */ ULong guest_CMSTART;
+      /*  560 */ ULong guest_CMLEN;
 
       /* Used to record the unredirected guest address at the start of
          a translation whose start has been redirected.  By reading
@@ -143,14 +141,15 @@ typedef
          find out what the corresponding no-redirection address was.
          Note, this is only set for wrap-style redirects, not for
          replace-style ones. */
-      /*  576 */ ULong guest_NRADDR;
+      /*  568 */ ULong guest_NRADDR;
 
       /* Fallback LL/SC support. */
-      /*  584 */ ULong guest_LLSC_SIZE; /* 0==no transaction, else 4 or 8. */
-      /*  592 */ ULong guest_LLSC_ADDR; /* Address of the transaction. */
-      /*  600 */ ULong guest_LLSC_DATA; /* Original value at ADDR. */
+      /*  576 */ ULong guest_LLSC_SIZE; /* 0==no transaction, else 4 or 8. */
+      /*  584 */ ULong guest_LLSC_ADDR; /* Address of the transaction. */
+      /*  592 */ ULong guest_LLSC_DATA; /* Original value at ADDR. */
 
       /* VexGuestLOONGARCH64State should have a 16-aligned size */
+      /*  600 */ ULong _padding1;
 } VexGuestLOONGARCH64State;
 
 /*---------------------------------------------------------------*/

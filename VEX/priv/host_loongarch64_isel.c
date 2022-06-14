@@ -33,7 +33,6 @@
 #include "main_globals.h"
 #include "host_generic_regs.h"
 #include "host_loongarch64_defs.h"
-#include "libvex_guest_offsets.h"  // For OFFSET_loongarch64_COND
 
 
 /*---------------------------------------------------------*/
@@ -171,10 +170,7 @@ static LOONGARCH64RI*      iselIntExpr_RI        ( ISelEnv* env, IRExpr* e,
 static HReg                iselIntExpr_R_wrk     ( ISelEnv* env, IRExpr* e );
 static HReg                iselIntExpr_R         ( ISelEnv* env, IRExpr* e );
 
-static void                iselCondCode_wrk      ( ISelEnv* env, IRExpr* e,
-                                                   LOONGARCH64CondCode* cc,
-                                                   HReg* dst );
-static LOONGARCH64CondCode iselCondCode_C        ( ISelEnv* env, IRExpr* e );
+static HReg                iselCondCode_R_wrk    ( ISelEnv* env, IRExpr* e );
 static HReg                iselCondCode_R        ( ISelEnv* env, IRExpr* e );
 
 static void                iselInt128Expr_wrk    ( HReg* hi, HReg* lo,
@@ -202,14 +198,6 @@ static LOONGARCH64AMode* mkLOONGARCH64AMode_RI ( HReg reg, UInt imm )
 {
    vassert(imm < (1 << 12));
    return LOONGARCH64AMode_RI(reg, (UShort)imm);
-}
-
-/* Store result to guest_COND */
-static void store_guest_COND ( ISelEnv* env, HReg src )
-{
-   UInt offs = OFFSET_loongarch64_COND;
-   LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offs);
-   addInstr(env, LOONGARCH64Instr_Store(LAstore_ST_W, am, src));
 }
 
 /* Set floating point rounding mode */
@@ -347,7 +335,7 @@ static Bool doHelperCall( /*OUT*/UInt* stackAdjustAfterCall,
                           IRExpr* guard,
                           IRCallee* cee, IRType retTy, IRExpr** args )
 {
-   LOONGARCH64CondCode cc;
+   HReg          cond;
    HReg          argregs[LOONGARCH64_N_ARGREGS];
    HReg          tmpregs[LOONGARCH64_N_ARGREGS];
    Bool          go_fast;
@@ -514,7 +502,7 @@ static Bool doHelperCall( /*OUT*/UInt* stackAdjustAfterCall,
       }
 
       /* Fast scheme only applies for unconditional calls.  Hence: */
-      cc = LAcc_AL;
+      cond = INVALID_HREG;
    } else {
       /* SLOW SCHEME; move via temporaries */
       nextArgReg = 0;
@@ -546,14 +534,14 @@ static Bool doHelperCall( /*OUT*/UInt* stackAdjustAfterCall,
          because the argument computations could trash the condition
          codes.  Be a bit clever to handle the common case where the
          guard is 1:Bit. */
-      cc = LAcc_AL;
+      cond = INVALID_HREG;
       if (guard) {
          if (guard->tag == Iex_Const
              && guard->Iex.Const.con->tag == Ico_U1
              && guard->Iex.Const.con->Ico.U1 == True) {
             /* unconditional -- do nothing */
          } else {
-            cc = iselCondCode_C(env, guard);
+            cond = iselCondCode_R(env, guard);
          }
       }
 
@@ -604,7 +592,7 @@ static Bool doHelperCall( /*OUT*/UInt* stackAdjustAfterCall,
       allocation, to know what regs the call reads.) */
 
    target = (Addr)cee->addr;
-   addInstr(env, LOONGARCH64Instr_Call(cc, target, nextArgReg, *retloc));
+   addInstr(env, LOONGARCH64Instr_Call(cond, target, nextArgReg, *retloc));
 
    return True; /* success */
 }
@@ -1451,23 +1439,9 @@ irreducible:
    condition code which would correspond when the expression would
    notionally have returned 1. */
 
-static LOONGARCH64CondCode iselCondCode_C ( ISelEnv* env, IRExpr* e )
-{
-   LOONGARCH64CondCode cc;
-   HReg r = newVRegI(env);
-   iselCondCode_wrk(env, e, &cc, &r);
-
-   /* sanity checks ... */
-   vassert(cc >= LAcc_EQ && cc <= LAcc_AL);
-
-   return cc;
-}
-
 static HReg iselCondCode_R ( ISelEnv* env, IRExpr* e )
 {
-   LOONGARCH64CondCode cc;
-   HReg r = newVRegI(env);
-   iselCondCode_wrk(env, e, &cc, &r);
+   HReg r = iselCondCode_R_wrk(env, e);
 
    /* sanity checks ... */
    vassert(hregClass(r) == HRcInt64);
@@ -1477,61 +1451,57 @@ static HReg iselCondCode_R ( ISelEnv* env, IRExpr* e )
 }
 
 /* DO NOT CALL THIS DIRECTLY ! */
-static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
-                               LOONGARCH64CondCode* cc, HReg* dst )
+static HReg iselCondCode_R_wrk ( ISelEnv* env, IRExpr* e )
 {
    vassert(e);
    vassert(typeOfIRExpr(env->type_env, e) == Ity_I1);
 
+   HReg dst = newVRegI(env);
+
    /* var */
    if (e->tag == Iex_RdTmp) {
       HReg tmp = newVRegI(env);
-      *dst = lookupIRTemp(env, e->Iex.RdTmp.tmp);
-      *cc = LAcc_EQ;
+      dst = lookupIRTemp(env, e->Iex.RdTmp.tmp);
       addInstr(env, LOONGARCH64Instr_LI(1, tmp));
-      addInstr(env, LOONGARCH64Instr_Cmp(*cc, *dst, tmp, *dst));
-      store_guest_COND(env, *dst);
-      return;
+      addInstr(env, LOONGARCH64Instr_Cmp(LAcc_EQ, dst, tmp, dst));
+      return dst;
    }
 
    /* const */
    if (e->tag == Iex_Const && e->Iex.Const.con->tag == Ico_U1) {
       UInt imm = e->Iex.Const.con->Ico.U1;
-      addInstr(env, LOONGARCH64Instr_LI(imm, *dst));
-      *cc = LAcc_EQ;
-      store_guest_COND(env, *dst);
-      return;
+      addInstr(env, LOONGARCH64Instr_LI(imm, dst));
+      return dst;
    }
 
    if (e->tag == Iex_Unop) {
       if (e->Iex.Unop.op == Iop_Not1) {
          HReg          src = iselCondCode_R(env, e->Iex.Unop.arg);
          LOONGARCH64RI* ri = LOONGARCH64RI_R(hregZERO());
-         addInstr(env, LOONGARCH64Instr_Binary(LAbin_NOR, ri, src, *dst));
-         *cc = LAcc_EQ;
-         store_guest_COND(env, *dst);
-         return;
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_NOR, ri, src, dst));
+         return dst;
       }
+
+      LOONGARCH64CondCode cc;
       switch (e->Iex.Unop.op) {
          case Iop_CmpNEZ16:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CmpNEZ32:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CmpNEZ64:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CmpNEZ8:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          default:
             goto irreducible;
       }
       HReg src = iselIntExpr_R(env, e->Iex.Unop.arg);
-      addInstr(env, LOONGARCH64Instr_Cmp(*cc, hregZERO(), src, *dst));
-      store_guest_COND(env, *dst);
-      return;
+      addInstr(env, LOONGARCH64Instr_Cmp(cc, hregZERO(), src, dst));
+      return dst;
    }
 
    if (e->tag == Iex_Binop) {
@@ -1539,76 +1509,73 @@ static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
          HReg           src1 = iselCondCode_R(env, e->Iex.Binop.arg1);
          HReg           src2 = iselCondCode_R(env, e->Iex.Binop.arg2);
          LOONGARCH64RI*   ri = LOONGARCH64RI_R(src2);
-         addInstr(env, LOONGARCH64Instr_Binary(LAbin_AND, ri, src1, *dst));
-         *cc = LAcc_EQ;
-         store_guest_COND(env, *dst);
-         return;
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_AND, ri, src1, dst));
+         return dst;
       } else if (e->Iex.Binop.op == Iop_Or1) {
          HReg           src1 = iselCondCode_R(env, e->Iex.Binop.arg1);
          HReg           src2 = iselCondCode_R(env, e->Iex.Binop.arg2);
          LOONGARCH64RI*   ri = LOONGARCH64RI_R(src2);
-         addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri, src1, *dst));
-         *cc = LAcc_EQ;
-         store_guest_COND(env, *dst);
-         return;
+         addInstr(env, LOONGARCH64Instr_Binary(LAbin_OR, ri, src1, dst));
+         return dst;
       }
 
       Bool extend  = False;
       Bool reverse = False;
+      LOONGARCH64CondCode cc;
       switch (e->Iex.Binop.op) {
          case Iop_CasCmpEQ32:
-            *cc = LAcc_EQ;
+            cc = LAcc_EQ;
             break;
          case Iop_CasCmpEQ64:
-            *cc = LAcc_EQ;
+            cc = LAcc_EQ;
             break;
          case Iop_CasCmpNE32:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CasCmpNE64:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CmpEQ32:
-            *cc = LAcc_EQ;
+            cc = LAcc_EQ;
             break;
          case Iop_CmpEQ64:
-            *cc = LAcc_EQ;
+            cc = LAcc_EQ;
             break;
          case Iop_CmpLE32S:
-            *cc = LAcc_GE;
+            cc = LAcc_GE;
             reverse = True;
             break;
          case Iop_CmpLE32U:
-            *cc = LAcc_GEU;
+            cc = LAcc_GEU;
             reverse = True;
             break;
          case Iop_CmpLE64S:
-            *cc = LAcc_GE;
+            cc = LAcc_GE;
             reverse = True;
             break;
          case Iop_CmpLE64U:
-            *cc = LAcc_GEU;
+            cc = LAcc_GEU;
             reverse = True;
             break;
          case Iop_CmpLT32S:
-            *cc = LAcc_LT;
+            cc = LAcc_LT;
             extend = True;
             break;
          case Iop_CmpLT32U:
-            *cc = LAcc_LTU;
+            cc = LAcc_LTU;
             extend = True;
             break;
          case Iop_CmpLT64S:
-            *cc = LAcc_LT;
+            cc = LAcc_LT;
             break;
          case Iop_CmpLT64U:
-            *cc = LAcc_LTU;
+            cc = LAcc_LTU;
             break;
          case Iop_CmpNE32:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          case Iop_CmpNE64:
-            *cc = LAcc_NE;
+            cc = LAcc_NE;
             break;
          default:
             goto irreducible;
@@ -1622,12 +1589,11 @@ static void iselCondCode_wrk ( ISelEnv* env, IRExpr* e,
          addInstr(env, LOONGARCH64Instr_Binary(LAbin_SLLI_W, ri, src2, src2));
       }
       if (reverse) {
-         addInstr(env, LOONGARCH64Instr_Cmp(*cc, src1, src2, *dst));
+         addInstr(env, LOONGARCH64Instr_Cmp(cc, src1, src2, dst));
       } else {
-         addInstr(env, LOONGARCH64Instr_Cmp(*cc, src2, src1, *dst));
+         addInstr(env, LOONGARCH64Instr_Cmp(cc, src2, src1, dst));
       }
-      store_guest_COND(env, *dst);
-      return;
+      return dst;
    }
 
    /* We get here if no pattern matched. */
@@ -2487,8 +2453,8 @@ static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
    if (stmt->Ist.Exit.dst->tag != Ico_U64)
       vpanic("iselStmt(loongarch64): Ist_Exit: dst is not a 64-bit value");
 
-   LOONGARCH64CondCode cc = iselCondCode_C(env, stmt->Ist.Exit.guard);
-   LOONGARCH64AMode*   am = mkLOONGARCH64AMode_RI(hregGSP(), stmt->Ist.Exit.offsIP);
+   HReg            cond = iselCondCode_R(env, stmt->Ist.Exit.guard);
+   LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), stmt->Ist.Exit.offsIP);
 
    /* Case: boring transfer to known address */
    if (stmt->Ist.Exit.jk == Ijk_Boring) {
@@ -2497,13 +2463,13 @@ static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
          /* Skip the event check at the dst if this is a forwards edge. */
          Bool toFastEP = ((Addr64)stmt->Ist.Exit.dst->Ico.U64) > env->max_ga;
          addInstr(env, LOONGARCH64Instr_XDirect(stmt->Ist.Exit.dst->Ico.U64,
-                                                am, cc, toFastEP));
+                                                am, cond, toFastEP));
       } else {
          /* .. very occasionally .. */
          /* We can't use chaining, so ask for an assisted transfer,
             as that's the only alternative that is allowable. */
          HReg dst = iselIntExpr_R(env, IRExpr_Const(stmt->Ist.Exit.dst));
-         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, cc, Ijk_Boring));
+         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, cond, Ijk_Boring));
       }
       return;
    }
@@ -2525,7 +2491,7 @@ static void iselStmtExit ( ISelEnv* env, IRStmt* stmt )
       case Ijk_SigSYS:
       case Ijk_Sys_syscall: {
          HReg dst = iselIntExpr_R(env, IRExpr_Const(stmt->Ist.Exit.dst));
-         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, cc, stmt->Ist.Exit.jk));
+         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, cond, stmt->Ist.Exit.jk));
          break;
       }
       default:
@@ -2636,13 +2602,14 @@ static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
             /* .. almost always true .. */
             /* Skip the event check at the dst if this is a forwards edge. */
             Bool toFastEP = ((Addr64)cdst->Ico.U64) > env->max_ga;
-            addInstr(env, LOONGARCH64Instr_XDirect(cdst->Ico.U64, am, LAcc_AL, toFastEP));
+            addInstr(env, LOONGARCH64Instr_XDirect(cdst->Ico.U64, am,
+                                                   INVALID_HREG, toFastEP));
          } else {
             /* .. very occasionally .. */
             /* We can't use chaining, so ask for an assisted transfer,
                as that's the only alternative that is allowable. */
             HReg dst = iselIntExpr_R(env, next);
-            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, Ijk_Boring));
+            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, INVALID_HREG, Ijk_Boring));
          }
          return;
       }
@@ -2654,9 +2621,10 @@ static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
          HReg dst = iselIntExpr_R(env, next);
          LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);
          if (env->chainingAllowed) {
-            addInstr(env, LOONGARCH64Instr_XIndir(dst, am, LAcc_AL));
+            addInstr(env, LOONGARCH64Instr_XIndir(dst, am, INVALID_HREG));
          } else {
-            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, Ijk_Boring));
+            addInstr(env, LOONGARCH64Instr_XAssisted(dst, am,
+                                                     INVALID_HREG, Ijk_Boring));
          }
          return;
       }
@@ -2681,7 +2649,7 @@ static void iselNext ( ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP )
       case Ijk_Sys_syscall: {
          HReg dst = iselIntExpr_R(env, next);
          LOONGARCH64AMode* am = mkLOONGARCH64AMode_RI(hregGSP(), offsIP);
-         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, LAcc_AL, jk));
+         addInstr(env, LOONGARCH64Instr_XAssisted(dst, am, INVALID_HREG, jk));
          return;
       }
       default:

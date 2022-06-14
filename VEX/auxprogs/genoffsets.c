@@ -298,7 +298,6 @@ void foo ( void )
    GENOFFSET(LOONGARCH64,loongarch64,R30);
    GENOFFSET(LOONGARCH64,loongarch64,R31);
    GENOFFSET(LOONGARCH64,loongarch64,PC);
-   GENOFFSET(LOONGARCH64,loongarch64,COND);
 }
 
 /*--------------------------------------------------------------------*/

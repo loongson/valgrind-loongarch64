@@ -139,7 +139,6 @@ void LibVEX_GuestLOONGARCH64_initialise ( /*OUT*/
    /* Various pseudo-regs mandated by Vex or Valgrind. */
    /* Emulation notes */
    vex_state->guest_EMNOTE = 0;
-   vex_state->guest_COND   = 0;
 
    /* For clflush: record start and length of area to invalidate */
    vex_state->guest_CMSTART = 0;

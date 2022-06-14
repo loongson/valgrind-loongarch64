@@ -32,7 +32,6 @@
 #include "main_util.h"
 #include "host_generic_regs.h"
 #include "host_loongarch64_defs.h"
-#include "libvex_guest_offsets.h"  // For OFFSET_loongarch64_COND
 
 
 /* --------- Local helpers. --------- */
@@ -209,7 +208,7 @@ static inline const HChar* showLOONGARCH64CondCode ( LOONGARCH64CondCode cond )
          ret = "geu"; /* great equal (unsigned) */
          break;
       case LAcc_AL:
-         ret = "al";    /* always (unconditional) */
+         ret = "al";  /* always (unconditional) */
          break;
       default:
          vpanic("showLOONGARCH64CondCode");
@@ -945,8 +944,7 @@ LOONGARCH64Instr* LOONGARCH64Instr_Cmp ( LOONGARCH64CondCode cond,
    return i;
 }
 
-LOONGARCH64Instr* LOONGARCH64Instr_Call ( LOONGARCH64CondCode cond,
-                                          Addr64 target,
+LOONGARCH64Instr* LOONGARCH64Instr_Call ( HReg cond, Addr64 target,
                                           UInt nArgRegs, RetLoc rloc )
 {
    LOONGARCH64Instr* i   = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
@@ -960,8 +958,7 @@ LOONGARCH64Instr* LOONGARCH64Instr_Call ( LOONGARCH64CondCode cond,
 
 LOONGARCH64Instr* LOONGARCH64Instr_XDirect ( Addr64 dstGA,
                                              LOONGARCH64AMode* amPC,
-                                             LOONGARCH64CondCode cond,
-                                             Bool toFastEP )
+                                             HReg cond, Bool toFastEP )
 {
    LOONGARCH64Instr* i      = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
    i->tag                   = LAin_XDirect;
@@ -973,7 +970,7 @@ LOONGARCH64Instr* LOONGARCH64Instr_XDirect ( Addr64 dstGA,
 }
 
 LOONGARCH64Instr* LOONGARCH64Instr_XIndir ( HReg dstGA, LOONGARCH64AMode* amPC,
-                                            LOONGARCH64CondCode cond )
+                                            HReg cond )
 {
    LOONGARCH64Instr* i  = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
    i->tag               = LAin_XIndir;
@@ -985,8 +982,7 @@ LOONGARCH64Instr* LOONGARCH64Instr_XIndir ( HReg dstGA, LOONGARCH64AMode* amPC,
 
 LOONGARCH64Instr* LOONGARCH64Instr_XAssisted ( HReg dstGA,
                                                LOONGARCH64AMode* amPC,
-                                               LOONGARCH64CondCode cond,
-                                               IRJumpKind jk )
+                                               HReg cond, IRJumpKind jk )
 {
    LOONGARCH64Instr* i     = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
    i->tag                  = LAin_XAssisted;
@@ -1170,53 +1166,77 @@ static inline void ppCmp ( LOONGARCH64CondCode cond, HReg src2,
    vex_printf(")");
 }
 
-static inline void ppCall ( LOONGARCH64CondCode cond, Addr64 target,
+static inline void ppCall ( HReg cond, Addr64 target,
                             UInt nArgRegs, RetLoc rloc )
 {
-   vex_printf("call%s ", showLOONGARCH64CondCode(cond));
-   vex_printf("0x%llx [nArgRegs=%u, ", target, nArgRegs);
+   if (!hregIsInvalid(cond)) {
+      vex_printf("if (");
+      ppHRegLOONGARCH64(cond);
+      vex_printf(") { ");
+   }
+   vex_printf("call 0x%llx [nArgRegs=%u, ", target, nArgRegs);
    ppRetLoc(rloc);
    vex_printf("]");
+   if (!hregIsInvalid(cond))
+      vex_printf(" }");
 }
 
 static inline void ppXDirect ( Addr64 dstGA, LOONGARCH64AMode* amPC,
-                               LOONGARCH64CondCode cond, Bool toFastEP )
+                               HReg cond, Bool toFastEP )
 {
    vex_printf("(xDirect) ");
-   vex_printf("if (guest_COND.%s) { ", showLOONGARCH64CondCode(cond));
+   if (!hregIsInvalid(cond)) {
+      vex_printf("if (");
+      ppHRegLOONGARCH64(cond);
+      vex_printf(") { ");
+   }
    vex_printf("li $t0, 0x%llx; ", (ULong)dstGA);
    vex_printf("st.w $t0, ");
    ppLOONGARCH64AMode(amPC);
    vex_printf("; li $t0, $disp_cp_chain_me_to_%sEP; ",
               toFastEP ? "fast" : "slow");
-   vex_printf("jirl $ra, $t0, 0 }");
+   vex_printf("jirl $ra, $t0, 0");
+   if (!hregIsInvalid(cond))
+      vex_printf(" }");
 }
 
 static inline void ppXIndir ( HReg dstGA, LOONGARCH64AMode* amPC,
-                              LOONGARCH64CondCode cond )
+                              HReg cond )
 {
    vex_printf("(xIndir) ");
-   vex_printf("if (guest_COND.%s) { ", showLOONGARCH64CondCode(cond));
+   if (!hregIsInvalid(cond)) {
+      vex_printf("if (");
+      ppHRegLOONGARCH64(cond);
+      vex_printf(") { ");
+   }
    vex_printf("st.w ");
    ppHRegLOONGARCH64(dstGA);
    vex_printf(", ");
    ppLOONGARCH64AMode(amPC);
    vex_printf("; la $t0, disp_indir; ");
-   vex_printf("jirl $ra, $t0, 0 }");
+   vex_printf("jirl $ra, $t0, 0");
+   if (!hregIsInvalid(cond))
+      vex_printf(" }");
 }
 
 static inline void ppXAssisted ( HReg dstGA, LOONGARCH64AMode* amPC,
-                                 LOONGARCH64CondCode cond, IRJumpKind jk)
+                                 HReg cond, IRJumpKind jk)
 {
    vex_printf("(xAssisted) ");
-   vex_printf("if (guest_COND.%s) { ", showLOONGARCH64CondCode(cond));
+   if (!hregIsInvalid(cond)) {
+      vex_printf("if (");
+      ppHRegLOONGARCH64(cond);
+      vex_printf(") { ");
+   }
    vex_printf("st.w ");
    ppHRegLOONGARCH64(dstGA);
    vex_printf(", ");
    ppLOONGARCH64AMode(amPC);
    vex_printf("; li.w $s8, IRJumpKind_to_TRCVAL(%d); ", (Int)jk);
    vex_printf("la $t0, disp_assisted; ");
-   vex_printf("jirl $ra, $t0, 0 }");
+   vex_printf("jirl $ra, $t0, 0");
+   if (!hregIsInvalid(cond))
+      vex_printf(" }");
 }
 
 static inline void ppEvCheck ( LOONGARCH64AMode* amCounter,
@@ -1419,7 +1439,10 @@ void getRegUsage_LOONGARCH64Instr ( HRegUsage* u, const LOONGARCH64Instr* i,
       case LAin_Call:
          /* logic and comments copied/modified from mips and arm64 back end */
          /* This is a bit subtle. */
-         /* First off, claim it trashes all the caller-saved regs
+         /* First off, we need to consider the cond register. */
+         if (!hregIsInvalid(i->LAin.Call.cond))
+            addHRegUse(u, HRmRead, i->LAin.Call.cond);
+         /* Then, claim it trashes all the caller-saved regs
             which fall within the register allocator's jurisdiction. */
          addHRegUse(u, HRmWrite, hregLOONGARCH64_R14());
          addHRegUse(u, HRmWrite, hregLOONGARCH64_R15());
@@ -1457,16 +1480,22 @@ void getRegUsage_LOONGARCH64Instr ( HRegUsage* u, const LOONGARCH64Instr* i,
          empty, hence only (1) is relevant here. */
       case LAin_XDirect:
          addRegUsage_LOONGARCH64AMode(u, i->LAin.XDirect.amPC);
+         if (!hregIsInvalid(i->LAin.XDirect.cond))
+            addHRegUse(u, HRmRead, i->LAin.XDirect.cond);
          addHRegUse(u, HRmWrite, hregT0()); /* unavail to RA */
          break;
       case LAin_XIndir:
          addHRegUse(u, HRmRead, i->LAin.XIndir.dstGA);
          addRegUsage_LOONGARCH64AMode(u, i->LAin.XIndir.amPC);
+         if (!hregIsInvalid(i->LAin.XIndir.cond))
+            addHRegUse(u, HRmRead, i->LAin.XIndir.cond);
          addHRegUse(u, HRmWrite, hregT0()); /* unavail to RA */
          break;
       case LAin_XAssisted:
          addHRegUse(u, HRmRead, i->LAin.XAssisted.dstGA);
          addRegUsage_LOONGARCH64AMode(u, i->LAin.XAssisted.amPC);
+         if (!hregIsInvalid(i->LAin.XAssisted.cond))
+            addHRegUse(u, HRmRead, i->LAin.XAssisted.cond);
          addHRegUse(u, HRmWrite, hregT0()); /* unavail to RA */
          break;
       case LAin_EvCheck:
@@ -1565,6 +1594,8 @@ void mapRegs_LOONGARCH64Instr ( HRegRemap* m, LOONGARCH64Instr* i,
          mapReg(m, &i->LAin.Cmp.dst);
          break;
       case LAin_Call:
+         if (!hregIsInvalid(i->LAin.Call.cond))
+            mapReg(m, &i->LAin.Call.cond);
          /* Hardwires $r12. */
          break;
       /* XDirect/XIndir/XAssisted are also a bit subtle.  They
@@ -1574,14 +1605,20 @@ void mapRegs_LOONGARCH64Instr ( HRegRemap* m, LOONGARCH64Instr* i,
          empty, hence only (1) is relevant here. */
       case LAin_XDirect:
          mapRegs_LOONGARCH64AMode(m, i->LAin.XDirect.amPC);
+         if (!hregIsInvalid(i->LAin.XDirect.cond))
+            mapReg(m, &i->LAin.XDirect.cond);
          break;
       case LAin_XIndir:
          mapReg(m, &i->LAin.XIndir.dstGA);
          mapRegs_LOONGARCH64AMode(m, i->LAin.XIndir.amPC);
+         if (!hregIsInvalid(i->LAin.XIndir.cond))
+            mapReg(m, &i->LAin.XIndir.cond);
          break;
       case LAin_XAssisted:
          mapReg(m, &i->LAin.XAssisted.dstGA);
          mapRegs_LOONGARCH64AMode(m, i->LAin.XAssisted.amPC);
+         if (!hregIsInvalid(i->LAin.XAssisted.cond))
+            mapReg(m, &i->LAin.XAssisted.cond);
          break;
       case LAin_EvCheck:
          /* We expect both amodes only to mention $r31, so this is in
@@ -2309,21 +2346,9 @@ static inline UInt* mkCmp ( UInt* p, LOONGARCH64CondCode cond,
    }
 }
 
-static inline UInt* mkLoad_guest_COND ( UInt *p, HReg dst )
+static inline UInt* mkCall ( UInt* p, HReg cond, Addr64 target, RetLoc rloc )
 {
-   /* ld.wu $t0, $s8, OFFSET_loongarch64_COND */
-   UInt *p0 = p;
-   LOONGARCH64AMode* am = LOONGARCH64AMode_RI(hregGSP(),
-                                              OFFSET_loongarch64_COND);
-   p = mkLoad(p, LAload_LD_WU, am, dst);
-   vassert((UInt)(p - p0) == 1);
-   return p;
-}
-
-static inline UInt* mkCall ( UInt* p, LOONGARCH64CondCode cond,
-                             Addr64 target, RetLoc rloc )
-{
-   if (cond != LAcc_AL && rloc.pri != RLPri_None) {
+   if (!hregIsInvalid(cond) && rloc.pri != RLPri_None) {
       /* The call might not happen (it isn't unconditional) and
          it returns a result.  In this case we will need to
          generate a control flow diamond to put 0x555..555 in
@@ -2335,12 +2360,11 @@ static inline UInt* mkCall ( UInt* p, LOONGARCH64CondCode cond,
    }
 
    UInt* ptmp = NULL;
-   if (cond != LAcc_AL) {
+   if (!hregIsInvalid(cond)) {
       /* Create a hole to put a conditional branch in.  We'll
          patch it once we know the branch length. */
-      vassert(cond >= LAcc_EQ && cond < LAcc_AL);
       ptmp = p;
-      p += 2;
+      p++;
    }
 
    /*
@@ -2351,16 +2375,12 @@ static inline UInt* mkCall ( UInt* p, LOONGARCH64CondCode cond,
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
 
    /* Patch the hole if necessary */
-   if (cond != LAcc_AL) {
+   if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 7);
-      /*
-         ld.wu $t0, $s8, OFFSET_loongarch64_COND
-         beq   $t0, $zero, offs
-       */
-      ptmp = mkLoad_guest_COND(ptmp, hregT0());
-      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs - 1, 12, 0);
+      vassert(offs == 6);
+      /* beq cond, $zero, offs */
+      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
 
    return p;
@@ -2368,7 +2388,7 @@ static inline UInt* mkCall ( UInt* p, LOONGARCH64CondCode cond,
 
 static inline UInt* mkXDirect ( UInt* p, Addr64 dstGA,
                                 LOONGARCH64AMode* amPC,
-                                LOONGARCH64CondCode cond, Bool toFastEP,
+                                HReg cond, Bool toFastEP,
                                 const void* disp_cp_chain_me_to_slowEP,
                                 const void* disp_cp_chain_me_to_fastEP )
 {
@@ -2386,10 +2406,9 @@ static inline UInt* mkXDirect ( UInt* p, Addr64 dstGA,
    /* First off, if this is conditional, create a conditional
       jump over the rest of it.  Or at least, leave a space for
       it that we will shortly fill in. */
-   if (cond != LAcc_AL) {
-      vassert(cond >= LAcc_EQ && cond < LAcc_AL);
+   if (!hregIsInvalid(cond)) {
       ptmp = p;
-      p += 2;
+      p++;
    }
 
    /* Update the guest PC.
@@ -2415,24 +2434,19 @@ static inline UInt* mkXDirect ( UInt* p, Addr64 dstGA,
    /* --- END of PATCHABLE BYTES --- */
 
    /* Fix up the conditional jump, if there was one. */
-   if (cond != LAcc_AL) {
+   if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 12);
-      /*
-         ld.wu $t0, $s8, OFFSET_loongarch64_COND
-         beq   $t0, $zero, offs
-       */
-      ptmp = mkLoad_guest_COND(ptmp, hregT0());
-      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs - 1, 12, 0);
+      vassert(offs == 11);
+      /* beq cond, $zero, offs */
+      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
 
    return p;
 }
 
 static inline UInt* mkXIndir ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
-                               LOONGARCH64CondCode cond,
-                               const void* disp_cp_xindir )
+                               HReg cond, const void* disp_cp_xindir )
 {
    /* We're generating transfers that could lead indirectly to a
       chain-me, so we need to be sure this is actually allowed --
@@ -2447,10 +2461,9 @@ static inline UInt* mkXIndir ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
 
    /* First off, if this is conditional, create a conditional
       jump over the rest of it. */
-   if (cond != LAcc_AL) {
-      vassert(cond >= LAcc_EQ && cond < LAcc_AL);
+   if (!hregIsInvalid(cond)) {
       ptmp = p;
-      p += 2;
+      p++;
    }
 
    /* Update the guest PC.
@@ -2468,33 +2481,28 @@ static inline UInt* mkXIndir ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
 
    /* Fix up the conditional jump, if there was one. */
-   if (cond != LAcc_AL) {
+   if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 9);
-      /*
-         ld.wu $t0, $s8, OFFSET_loongarch64_COND
-         beq   $t0, $zero, offs
-       */
-      ptmp = mkLoad_guest_COND(ptmp, hregT0());
-      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs - 1, 12, 0);
+      vassert(offs == 8);
+      /* beq cond, $zero, offs */
+      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
 
    return p;
 }
 
 static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
-                                  LOONGARCH64CondCode cond, IRJumpKind jk,
+                                  HReg cond, IRJumpKind jk,
                                   const void* disp_cp_xassisted )
 {
    /* First off, if this is conditional, create a conditional jump
       over the rest of it.  Or at least, leave a space for it that
       we will shortly fill in. */
    UInt* ptmp = NULL;
-   if (cond != LAcc_AL) {
-      vassert(cond >= LAcc_EQ && cond < LAcc_AL);
+   if (!hregIsInvalid(cond)) {
       ptmp = p;
-      p += 2;
+      p++;
    }
 
    /* Update the guest PC.
@@ -2576,16 +2584,12 @@ static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
 
    /* Fix up the conditional jump, if there was one. */
-   if (cond != LAcc_AL) {
+   if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 13);
-      /*
-         ld.wu $t0, $s8, OFFSET_loongarch64_COND
-         beq   $t0, $zero, offs
-       */
-      ptmp = mkLoad_guest_COND(ptmp, hregT0());
-      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs - 1, 12, 0);
+      vassert(offs == 12);
+      /* beq cond, $zero, offs */
+      *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
 
    return p;
@@ -2754,7 +2758,7 @@ Int emit_LOONGARCH64Instr ( /*MB_MOD*/Bool* is_profInc,
       /*NOTREACHED*/
    }
 
-   vassert(((UChar*)p) - &buf[0] <= 52);
+   vassert(((UChar*)p) - &buf[0] <= 48);
    return ((UChar*)p) - &buf[0];
 }
 

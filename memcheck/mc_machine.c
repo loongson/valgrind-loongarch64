@@ -1492,7 +1492,6 @@ static Int get_otrack_shadow_offset_wrk ( Int offset, Int szB )
    if (o == GOF(FCSR) && sz == 4) return -1;  /* slot unused */
 
    if (o == GOF(EMNOTE) && sz == 4) return -1;  /* slot unused */
-   if (o == GOF(COND)   && sz == 4) return -1;  /* slot unused */
 
    if (o == GOF(CMSTART) && sz == 8) return -1;  /* slot unused */
    if (o == GOF(CMLEN)   && sz == 8) return -1;  /* slot unused */
