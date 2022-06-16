@@ -49,7 +49,7 @@ ST_IN HReg hregLOONGARCH64_R30 ( void ) { return mkHReg(False, HRcInt64, 30,  7)
 /* $r31 is used as guest stack pointer */
 
 /* Integer temporary registers */
-/* $r12 is used as a chaining/ProfInc temporary */
+/* $r12 is used as a chaining/ProfInc/Cmove temporary */
 /* $r13 is used as a ProfInc temporary */
 ST_IN HReg hregLOONGARCH64_R14 ( void ) { return mkHReg(False, HRcInt64, 14,  8); }
 ST_IN HReg hregLOONGARCH64_R15 ( void ) { return mkHReg(False, HRcInt64, 15,  9); }
@@ -362,12 +362,16 @@ typedef enum {
 
 /* Tags for extra operations, we only use them when emiting code directly */
 typedef enum {
+   LAextra_MOVGR2CF = 0x0114d800,
    LAextra_MOVCF2GR = 0x0114dc00,
    LAextra_SLT      = 0x00120000,
    LAextra_SLTU     = 0x00128000,
+   LAextra_MASKEQZ  = 0x00130000,
+   LAextra_MASKNEZ  = 0x00138000,
    LAextra_SLTI     = 0x02000000,
    LAextra_SLTUI    = 0x02400000,
    LAextra_LU52I_D  = 0x03000000,
+   LAextra_FSEL     = 0x0d000000,
    LAextra_LU12I_W  = 0x14000000,
    LAextra_LU32I_D  = 0x16000000,
    LAextra_JIRL     = 0x4c000000,
@@ -403,6 +407,7 @@ typedef enum {
    /* Pseudo-insn */
    LAin_Cas,        /* compare and swap */
    LAin_Cmp,        /* word compare */
+   LAin_CMove,      /* condition move */
 
    /* Call target (an absolute address), on given
       condition (which could be LAcc_AL). */
@@ -508,6 +513,13 @@ typedef struct {
       } Cmp;
       struct {
          HReg                 cond;
+         HReg                 r0;
+         HReg                 r1;
+         HReg                 dst;
+         Bool                 isInt;
+      } CMove;
+      struct {
+         HReg                 cond;
          Addr64               target;
          UInt                 nArgRegs;
          RetLoc               rloc;
@@ -584,6 +596,8 @@ extern LOONGARCH64Instr* LOONGARCH64Instr_Cas       ( HReg old, HReg addr,
 extern LOONGARCH64Instr* LOONGARCH64Instr_Cmp       ( LOONGARCH64CondCode cond,
                                                       HReg src2, HReg src1,
                                                       HReg dst );
+extern LOONGARCH64Instr* LOONGARCH64Instr_CMove     ( HReg cond, HReg r0, HReg r1,
+                                                      HReg dst, Bool isInt );
 extern LOONGARCH64Instr* LOONGARCH64Instr_Call      ( HReg cond, Addr64 target,
                                                       UInt nArgRegs, RetLoc rloc );
 extern LOONGARCH64Instr* LOONGARCH64Instr_XDirect   ( Addr64 dstGA,

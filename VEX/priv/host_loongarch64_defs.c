@@ -944,6 +944,19 @@ LOONGARCH64Instr* LOONGARCH64Instr_Cmp ( LOONGARCH64CondCode cond,
    return i;
 }
 
+LOONGARCH64Instr* LOONGARCH64Instr_CMove ( HReg cond, HReg r0, HReg r1,
+                                           HReg dst, Bool isInt )
+{
+   LOONGARCH64Instr* i  = LibVEX_Alloc_inline(sizeof(LOONGARCH64Instr));
+   i->tag               = LAin_CMove;
+   i->LAin.CMove.cond   = cond;
+   i->LAin.CMove.r0     = r0;
+   i->LAin.CMove.r1     = r1;
+   i->LAin.CMove.dst    = dst;
+   i->LAin.CMove.isInt  = isInt;
+   return i;
+}
+
 LOONGARCH64Instr* LOONGARCH64Instr_Call ( HReg cond, Addr64 target,
                                           UInt nArgRegs, RetLoc rloc )
 {
@@ -1166,6 +1179,37 @@ static inline void ppCmp ( LOONGARCH64CondCode cond, HReg src2,
    vex_printf(")");
 }
 
+static inline void ppCMove ( HReg cond, HReg r0, HReg r1,
+                             HReg dst, Bool isInt )
+{
+   if (isInt) {
+      vex_printf("masknez $t0, ");
+      ppHRegLOONGARCH64(r0);
+      vex_printf(", ");
+      ppHRegLOONGARCH64(cond);
+      vex_printf("; maskeqz ");
+      ppHRegLOONGARCH64(dst);
+      vex_printf(", ");
+      ppHRegLOONGARCH64(r1);
+      vex_printf(", ");
+      ppHRegLOONGARCH64(cond);
+      vex_printf("; or ");
+      ppHRegLOONGARCH64(dst);
+      vex_printf(", $t0, ");
+      ppHRegLOONGARCH64(dst);
+   } else {
+      vex_printf("movgr2cf ");
+      ppHRegLOONGARCH64(cond);
+      vex_printf(", $fcc0; fsel ");
+      ppHRegLOONGARCH64(dst);
+      vex_printf(", ");
+      ppHRegLOONGARCH64(r0);
+      vex_printf(", ");
+      ppHRegLOONGARCH64(r1);
+      vex_printf(", $fcc0");
+   }
+}
+
 static inline void ppCall ( HReg cond, Addr64 target,
                             UInt nArgRegs, RetLoc rloc )
 {
@@ -1326,6 +1370,11 @@ void ppLOONGARCH64Instr ( const LOONGARCH64Instr* i, Bool mode64 )
          ppCmp(i->LAin.Cmp.cond, i->LAin.Cmp.src2,
                i->LAin.Cmp.src1, i->LAin.Cmp.dst);
          break;
+      case LAin_CMove:
+         ppCMove(i->LAin.CMove.cond, i->LAin.CMove.r0,
+                 i->LAin.CMove.r1, i->LAin.CMove.dst,
+                 i->LAin.CMove.isInt);
+         break;
       case LAin_Call:
          ppCall(i->LAin.Call.cond, i->LAin.Call.target,
                 i->LAin.Call.nArgRegs, i->LAin.Call.rloc);
@@ -1435,6 +1484,12 @@ void getRegUsage_LOONGARCH64Instr ( HRegUsage* u, const LOONGARCH64Instr* i,
          addHRegUse(u, HRmRead, i->LAin.Cmp.src2);
          addHRegUse(u, HRmRead, i->LAin.Cmp.src1);
          addHRegUse(u, HRmWrite, i->LAin.Cmp.dst);
+         break;
+      case LAin_CMove:
+         addHRegUse(u, HRmRead, i->LAin.CMove.cond);
+         addHRegUse(u, HRmRead, i->LAin.CMove.r0);
+         addHRegUse(u, HRmRead, i->LAin.CMove.r1);
+         addHRegUse(u, HRmWrite, i->LAin.CMove.dst);
          break;
       case LAin_Call:
          /* logic and comments copied/modified from mips and arm64 back end */
@@ -1592,6 +1647,12 @@ void mapRegs_LOONGARCH64Instr ( HRegRemap* m, LOONGARCH64Instr* i,
          mapReg(m, &i->LAin.Cmp.src2);
          mapReg(m, &i->LAin.Cmp.src1);
          mapReg(m, &i->LAin.Cmp.dst);
+         break;
+      case LAin_CMove:
+         mapReg(m, &i->LAin.CMove.cond);
+         mapReg(m, &i->LAin.CMove.r0);
+         mapReg(m, &i->LAin.CMove.r1);
+         mapReg(m, &i->LAin.CMove.dst);
          break;
       case LAin_Call:
          if (!hregIsInvalid(i->LAin.Call.cond))
@@ -1777,6 +1838,15 @@ static inline UInt emit_op_fk_fj_fd ( UInt op, UInt fk, UInt fj, UInt fd )
    return op | (fk << 10) | (fj << 5) | fd;
 }
 
+static inline UInt emit_op_ca_fk_fj_fd ( UInt op, UInt ca, UInt fk, UInt fj, UInt fd )
+{
+   vassert(ca < (1 << 3));
+   vassert(fk < (1 << 5));
+   vassert(fj < (1 << 5));
+   vassert(fd < (1 << 5));
+   return op | (ca << 15) | (fk << 10) | (fj << 5) | fd;
+}
+
 static inline UInt emit_op_fk_fj_cd ( UInt op, UInt fk, UInt fj, UInt cd )
 {
    vassert(fk < (1 << 5));
@@ -1790,6 +1860,13 @@ static inline UInt emit_op_cj_rd ( UInt op, UInt cj, UInt rd )
    vassert(cj < (1 << 3));
    vassert(rd < (1 << 5));
    return op | (cj << 5) | rd;
+}
+
+static inline UInt emit_op_rj_cd ( UInt op, UInt rj, UInt cd )
+{
+   vassert(rj < (1 << 5));
+   vassert(cd < (1 << 3));
+   return op | (rj << 5) | cd;
 }
 
 static inline UInt emit_op_rj_fd ( UInt op, UInt rj, UInt fd )
@@ -2346,6 +2423,32 @@ static inline UInt* mkCmp ( UInt* p, LOONGARCH64CondCode cond,
    }
 }
 
+static inline UInt* mkCMove ( UInt* p, HReg cond, HReg r0,
+                              HReg r1, HReg dst, Bool isInt )
+{
+   if (isInt) {
+      /*
+         masknez $t0, r0, cond
+         maskeqz dst, r1, cond
+         or      dst, $t0, dst
+       */
+      UInt c = iregEnc(cond);
+      UInt d = iregEnc(dst);
+      *p++ = emit_op_rk_rj_rd(LAextra_MASKNEZ, c, iregEnc(r0), 12);
+      *p++ = emit_op_rk_rj_rd(LAextra_MASKEQZ, c, iregEnc(r1), d);
+      *p++ = emit_op_rk_rj_rd(LAbin_OR, d, 12, d);
+   } else {
+      /*
+         movgr2cf $fcc0, cond
+         fsel     dst, r0, r1, $fcc0
+       */
+      *p++ = emit_op_rj_cd(LAextra_MOVGR2CF, iregEnc(cond), 0);
+      *p++ = emit_op_ca_fk_fj_fd(LAextra_FSEL, 0, fregEnc(r1),
+                                 fregEnc(r0), fregEnc(dst));
+   }
+   return p;
+}
+
 static inline UInt* mkCall ( UInt* p, HReg cond, Addr64 target, RetLoc rloc )
 {
    if (!hregIsInvalid(cond) && rloc.pri != RLPri_None) {
@@ -2720,6 +2823,11 @@ Int emit_LOONGARCH64Instr ( /*MB_MOD*/Bool* is_profInc,
       case LAin_Cmp:
          p = mkCmp(p, i->LAin.Cmp.cond, i->LAin.Cmp.src2,
                    i->LAin.Cmp.src1, i->LAin.Cmp.dst);
+         break;
+      case LAin_CMove:
+         p = mkCMove(p, i->LAin.CMove.cond, i->LAin.CMove.r0,
+                     i->LAin.CMove.r1, i->LAin.CMove.dst,
+                     i->LAin.CMove.isInt);
          break;
       case LAin_Call:
          p = mkCall(p, i->LAin.Call.cond, i->LAin.Call.target,

@@ -1423,6 +1423,15 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, IRExpr* e )
          return dst;
       }
 
+      case Iex_ITE: {
+         HReg   r0 = iselIntExpr_R(env, e->Iex.ITE.iffalse);
+         HReg   r1 = iselIntExpr_R(env, e->Iex.ITE.iftrue);
+         HReg cond = iselCondCode_R(env, e->Iex.ITE.cond);
+         HReg  dst = newVRegI(env);
+         addInstr(env, LOONGARCH64Instr_CMove(cond, r0, r1, dst, True));
+         return dst;
+      }
+
       default:
          break;
    }
@@ -2165,6 +2174,15 @@ static HReg iselFltExpr_wrk ( ISelEnv* env, IRExpr* e )
          } else {
             goto irreducible;
          }
+      }
+
+      case Iex_ITE: {
+         HReg   r0 = iselFltExpr(env, e->Iex.ITE.iffalse);
+         HReg   r1 = iselFltExpr(env, e->Iex.ITE.iftrue);
+         HReg cond = iselCondCode_R(env, e->Iex.ITE.cond);
+         HReg  dst = newVRegF(env);
+         addInstr(env, LOONGARCH64Instr_CMove(cond, r0, r1, dst, False));
+         return dst;
       }
 
       default:

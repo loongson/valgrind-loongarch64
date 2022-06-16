@@ -569,24 +569,6 @@ static void putPC ( IRExpr* e )
    stmt(IRStmt_Put(offsetof(VexGuestLOONGARCH64State, guest_PC), e));
 }
 
-static IRExpr* gen_cmove_w ( IRExpr* cond, IRExpr* iftrue, IRExpr* iffalse )
-{
-   IRExpr* mask = unop(Iop_1Sto32, cond);
-   IRExpr* and1 = binop(Iop_And32, mask, iftrue);
-   IRExpr* not = unop(Iop_Not32, mask);
-   IRExpr* and2 = binop(Iop_And32, not, iffalse);
-   return binop(Iop_Or32, and1, and2);
-}
-
-static IRExpr* gen_cmove_d ( IRExpr* cond, IRExpr* iftrue, IRExpr* iffalse )
-{
-   IRExpr* mask = unop(Iop_1Sto64, cond);
-   IRExpr* and1 = binop(Iop_And64, mask, iftrue);
-   IRExpr* not = unop(Iop_Not64, mask);
-   IRExpr* and2 = binop(Iop_And64, not, iffalse);
-   return binop(Iop_Or64, and1, and2);
-}
-
 /* ---------------- Floating point registers ---------------- */
 
 static Int offsetFReg ( UInt iregNo )
@@ -3466,22 +3448,22 @@ static Bool gen_am_w_helper ( enum amop op, Bool fence,
          break;
       case AMMAX: {
          IRExpr* cond = binop(Iop_CmpLT32S, mkexpr(n), mkexpr(o));
-         e = gen_cmove_w(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMIN: {
          IRExpr* cond = binop(Iop_CmpLT32S, mkexpr(o), mkexpr(n));
-         e = gen_cmove_w(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMAX_U: {
          IRExpr* cond = binop(Iop_CmpLT32U, mkexpr(n), mkexpr(o));
-         e = gen_cmove_w(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMIN_U: {
          IRExpr* cond = binop(Iop_CmpLT32U, mkexpr(o), mkexpr(n));
-         e = gen_cmove_w(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       default:
@@ -3533,22 +3515,22 @@ static Bool gen_am_d_helper ( enum amop op, Bool fence,
          break;
       case AMMAX: {
          IRExpr* cond = binop(Iop_CmpLT64S, mkexpr(n), mkexpr(o));
-         e = gen_cmove_d(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMIN: {
          IRExpr* cond = binop(Iop_CmpLT64S, mkexpr(o), mkexpr(n));
-         e = gen_cmove_d(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMAX_U: {
          IRExpr* cond = binop(Iop_CmpLT64U, mkexpr(n), mkexpr(o));
-         e = gen_cmove_d(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       case AMMIN_U: {
          IRExpr* cond = binop(Iop_CmpLT64U, mkexpr(o), mkexpr(n));
-         e = gen_cmove_d(cond, mkexpr(o), mkexpr(n));
+         e = IRExpr_ITE(cond, mkexpr(o), mkexpr(n));
          break;
       }
       default:
@@ -6539,11 +6521,8 @@ static Bool gen_convert_s_helper ( enum fpop op, UInt fd, UInt fj )
    }
 
    calculateFCSR(op, 1, fj, 0, 0);
-   IRExpr* cond = is_Invalid_Overflow();
-   IRExpr* iftrue = mkU32(0x7fffffff);
-   IRExpr* iffalse = e;
-   IRExpr* cmove = gen_cmove_w(cond, iftrue, iffalse);
-   putFReg32(fd, unop(Iop_ReinterpI32asF32, cmove));
+   IRExpr* ite = IRExpr_ITE(is_Invalid_Overflow(), mkU32(0x7fffffff), e);
+   putFReg32(fd, unop(Iop_ReinterpI32asF32, ite));
 
    return True;
 }
@@ -6598,11 +6577,9 @@ static Bool gen_convert_d_helper ( enum fpop op, UInt fd, UInt fj )
    }
 
    calculateFCSR(op, 1, fj, 0, 0);
-   IRExpr* cond = is_Invalid_Overflow();
-   IRExpr* iftrue = mkU64(0x7fffffffffffffffULL);
-   IRExpr* iffalse = e;
-   IRExpr* cmove = gen_cmove_d(cond, iftrue, iffalse);
-   putFReg64(fd, unop(Iop_ReinterpI64asF64, cmove));
+   IRExpr* ite = IRExpr_ITE(is_Invalid_Overflow(),
+                            mkU64(0x7fffffffffffffffULL), e);
+   putFReg64(fd, unop(Iop_ReinterpI64asF64, ite));
 
    return True;
 }
@@ -7210,10 +7187,7 @@ static Bool gen_fsel ( DisResult* dres, UInt insn,
 
    IRExpr* cc = unop(Iop_8Uto64, getFCC(ca));
    IRExpr* cond = binop(Iop_CmpEQ64, cc, mkU64(0));
-   IRExpr* iftrue = unop(Iop_ReinterpF64asI64, getFReg64(fj));
-   IRExpr* iffalse = unop(Iop_ReinterpF64asI64, getFReg64(fk));
-   IRExpr* move = gen_cmove_d(cond, iftrue, iffalse);
-   putFReg64(fd, unop(Iop_ReinterpI64asF64, move));
+   putFReg64(fd, IRExpr_ITE(cond, getFReg64(fj), getFReg64(fk)));
 
    return True;
 }
