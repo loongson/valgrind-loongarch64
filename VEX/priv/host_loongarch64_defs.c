@@ -1964,7 +1964,7 @@ static inline UInt emit_op_hint15 ( UInt op, UInt hint )
    return op | hint;
 }
 
-static UInt* mkLoadImm ( UInt* p, HReg dst, ULong imm )
+static UInt* mkLoadImm_EXACTLY4 ( UInt* p, HReg dst, ULong imm )
 {
    /*
       lu12i.w dst, imm[31:12]
@@ -1972,18 +1972,48 @@ static UInt* mkLoadImm ( UInt* p, HReg dst, ULong imm )
       lu32i.d dst, imm[51:32]
       lu52i.d dst, dst, imm[63:52]
     */
-   UInt reg = iregEnc(dst);
-   *p++ = emit_op_si20_rd(LAextra_LU12I_W, (imm >> 12) & 0xfffff, reg);
-   *p++ = emit_op_si12_rj_rd(LAbin_ORI, imm & 0xfff, reg, reg);
-   *p++ = emit_op_si20_rd(LAextra_LU32I_D, (imm >> 32) & 0xfffff, reg);
-   *p++ = emit_op_si12_rj_rd(LAextra_LU52I_D, (imm >> 52) & 0xfff, reg, reg);
+   UInt d = iregEnc(dst);
+   *p++ = emit_op_si20_rd(LAextra_LU12I_W, (imm >> 12) & 0xfffff, d);
+   *p++ = emit_op_si12_rj_rd(LAbin_ORI, imm & 0xfff, d, d);
+   *p++ = emit_op_si20_rd(LAextra_LU32I_D, (imm >> 32) & 0xfffff, d);
+   *p++ = emit_op_si12_rj_rd(LAextra_LU52I_D, (imm >> 52) & 0xfff, d, d);
    return p;
 }
 
-static Bool is_LoadImm ( UInt* p, HReg dst, ULong imm )
+static inline UInt* mkLoadImm_EXACTLY2 ( UInt* p, HReg dst, ULong imm )
+{
+   /*
+      lu12i.w dst, imm[31:12]
+      ori     dst, dst, imm[11:0]
+    */
+   UInt d = iregEnc(dst);
+   *p++ = emit_op_si20_rd(LAextra_LU12I_W, (imm >> 12) & 0xfffff, d);
+   *p++ = emit_op_si12_rj_rd(LAbin_ORI, imm & 0xfff, d, d);
+   return p;
+}
+
+static inline UInt* mkLoadImm_EXACTLY1 ( UInt* p, HReg dst, ULong imm )
+{
+   /* ori dst, $zero, imm[11:0] */
+   *p++ = emit_op_si12_rj_rd(LAbin_ORI, imm, 0, iregEnc(dst));
+   return p;
+}
+
+static UInt* mkLoadImm ( UInt* p, HReg dst, ULong imm )
+{
+   if ((imm >> 12) == 0)
+      p = mkLoadImm_EXACTLY1(p, dst, imm);
+   else if (imm < 0x80000000 || (imm >> 31) == 0x1ffffffffUL)
+      p = mkLoadImm_EXACTLY2(p, dst, imm);
+   else
+      p = mkLoadImm_EXACTLY4(p, dst, imm);
+   return p;
+}
+
+static Bool is_LoadImm_EXACTLY4 ( UInt* p, HReg dst, ULong imm )
 {
    UInt expect[4];
-   mkLoadImm(expect, dst, imm);
+   mkLoadImm_EXACTLY4(expect, dst, imm);
    return toBool(p[0] == expect[0] && p[1] == expect[1] &&
                  p[2] == expect[2] && p[3] == expect[3]);
 }
@@ -2481,7 +2511,7 @@ static inline UInt* mkCall ( UInt* p, HReg cond, Addr64 target, RetLoc rloc )
    if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 6);
+      vassert(offs >= 3 && offs <= 6);
       /* beq cond, $zero, offs */
       *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
@@ -2532,7 +2562,7 @@ static inline UInt* mkXDirect ( UInt* p, Addr64 dstGA,
     */
    const void* disp_cp_chain_me = toFastEP ? disp_cp_chain_me_to_fastEP
                                            : disp_cp_chain_me_to_slowEP;
-   p = mkLoadImm(p, hregT0(), (ULong)(Addr)disp_cp_chain_me);
+   p = mkLoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)disp_cp_chain_me);
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
    /* --- END of PATCHABLE BYTES --- */
 
@@ -2540,7 +2570,7 @@ static inline UInt* mkXDirect ( UInt* p, Addr64 dstGA,
    if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 11);
+      vassert(offs >= 8 && offs <= 11);
       /* beq cond, $zero, offs */
       *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
@@ -2587,7 +2617,7 @@ static inline UInt* mkXIndir ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
    if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 8);
+      vassert(offs >= 5 && offs <= 8);
       /* beq cond, $zero, offs */
       *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
@@ -2690,7 +2720,7 @@ static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
    if (!hregIsInvalid(cond)) {
       vassert(ptmp != NULL);
       UInt offs = (UInt)(p - ptmp);
-      vassert(offs == 12);
+      vassert(offs >= 6 && offs <= 12);
       /* beq cond, $zero, offs */
       *ptmp++ = emit_op_offs16_rj_rd(LAextra_BEQ, offs, iregEnc(cond), 0);
    }
@@ -2727,12 +2757,12 @@ static inline UInt* mkEvCheck ( UInt* p, LOONGARCH64AMode* amCounter,
 static inline UInt* mkProfInc ( UInt* p )
 {
    /*
-      li     $t0, 0x6555755585559555ULL
+      li     $t0, 0x6555755585559555UL
       ld.d   $t1, $t0, 0
       addi.d $t1, $t1, 1
       st.d   $t1, $t0, 0
     */
-   p = mkLoadImm(p, hregT0(), 0x6555755585559555ULL);
+   p = mkLoadImm_EXACTLY4(p, hregT0(), 0x6555755585559555UL);
    *p++ = emit_op_si12_rj_rd(LAload_LD_D, 0, 12, 13);
    *p++ = emit_op_si12_rj_rd(LAbin_ADDI_D, 1, 13, 13);
    *p++ = emit_op_si12_rj_rd(LAstore_ST_D, 0, 12, 13);
@@ -2890,24 +2920,24 @@ VexInvalRange chainXDirect_LOONGARCH64 ( VexEndness endness_host,
     *  la $t0, disp_cp_chain_me_to_EXPECTED
     *  jirl $ra, $t0, 0
     * viz
-    *  <16 bytes generated by mkLoadImm>
+    *  <16 bytes generated by mkLoadImm_EXACTLY4>
     *  jirl $ra, $t0, 0
     */
    UInt* p = (UInt*)place_to_chain;
    vassert(((HWord)p & 3) == 0);
-   vassert(is_LoadImm(p, hregT0(), (ULong)(Addr)disp_cp_chain_me_EXPECTED));
+   vassert(is_LoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)disp_cp_chain_me_EXPECTED));
    vassert(p[4] == emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1));
 
    /* And what we want to change it to is:
     *  la $t0, place_to_jump_to
     *  jirl $ra, $t0, 0
     * viz
-    *  <16 bytes generated by mkLoadImm>
+    *  <16 bytes generated by mkLoadImm_EXACTLY4>
     *  jirl $ra, $t0, 0
     *
     * The replacement has the same length as the original.
     */
-   p = mkLoadImm(p, hregT0(), (ULong)(Addr)place_to_jump_to);
+   p = mkLoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)place_to_jump_to);
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
 
    VexInvalRange vir = { (HWord)place_to_chain, 4 * 4 + 4 };
@@ -2927,24 +2957,24 @@ VexInvalRange unchainXDirect_LOONGARCH64 ( VexEndness endness_host,
     *  la $t0, place_to_jump_to_EXPECTED
     *  jirl $ra, $t0, 0
     * viz
-    *  <16 bytes generated by mkLoadImm>
+    *  <16 bytes generated by mkLoadImm_EXACTLY4>
     *  jirl $ra, $t0, 0
     */
    UInt* p = (UInt*)place_to_unchain;
    vassert(((HWord)p & 3) == 0);
-   vassert(is_LoadImm(p, hregT0(), (ULong)(Addr)place_to_jump_to_EXPECTED));
+   vassert(is_LoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)place_to_jump_to_EXPECTED));
    vassert(p[4] == emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1));
 
    /* And what we want to change it to is:
     *  la $t0, disp_cp_chain_me
     *  jirl $ra, $t0, 0
     * viz
-    *  <16 bytes generated by mkLoadImm>
+    *  <16 bytes generated by mkLoadImm_EXACTLY4>
     *  jirl $ra, $t0, 0
     *
     * The replacement has the same length as the original.
     */
-   p = mkLoadImm(p, hregT0(), (ULong)(Addr)disp_cp_chain_me);
+   p = mkLoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)disp_cp_chain_me);
    *p++ = emit_op_offs16_rj_rd(LAextra_JIRL, 0, 12, 1);
 
    VexInvalRange vir = { (HWord)place_to_unchain, 4 * 4 + 4 };
@@ -2968,12 +2998,12 @@ VexInvalRange patchProfInc_LOONGARCH64 ( VexEndness endness_host,
     */
    UInt* p = (UInt*)place_to_patch;
    vassert(((HWord)p & 3) == 0);
-   vassert(is_LoadImm(p, hregT0(), 0x6555755585559555ULL));
+   vassert(is_LoadImm_EXACTLY4(p, hregT0(), 0x6555755585559555UL));
    vassert(p[4] == emit_op_si12_rj_rd(LAload_LD_D, 0, 12, 13));
    vassert(p[5] == emit_op_si12_rj_rd(LAbin_ADDI_D, 1, 13, 13));
    vassert(p[6] == emit_op_si12_rj_rd(LAstore_ST_D, 0, 12, 13));
 
-   p = mkLoadImm(p, hregT0(), (ULong)(Addr)location_of_counter);
+   p = mkLoadImm_EXACTLY4(p, hregT0(), (ULong)(Addr)location_of_counter);
 
    VexInvalRange vir = { (HWord)place_to_patch, 4 * 4 };
    return vir;

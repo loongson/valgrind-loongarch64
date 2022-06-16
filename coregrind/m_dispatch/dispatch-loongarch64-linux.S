@@ -146,7 +146,7 @@ VG_(disp_cp_chain_me_to_slowEP):
       handing the caller the pair (Chain_me_S, RA) */
    li.w     $a0, VG_TRC_CHAIN_ME_TO_SLOW_EP
    move     $a1, $ra
-   /* 4 * 4 = mkLoadImm
+   /* 4 * 4 = mkLoadImm_EXACTLY4
           4 = jirl $ra, $t0, 0 */
    addi.d   $a1, $a1, -20
    b        postamble
@@ -161,7 +161,7 @@ VG_(disp_cp_chain_me_to_fastEP):
       handing the caller the pair (Chain_me_S, RA) */
    li.w     $a0, VG_TRC_CHAIN_ME_TO_FAST_EP
    move     $a1, $ra
-   /* 4 * 4 = mkLoadImm
+   /* 4 * 4 = mkLoadImm_EXACTLY4
       4     = jirl $ra, $t0, 0 */
    addi.d   $a1, $a1, -20
    b        postamble
