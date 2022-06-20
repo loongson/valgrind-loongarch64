@@ -625,14 +625,19 @@ static Int offsetFCC ( UInt iregNo )
    }
 }
 
-static IRExpr* getFReg32 ( UInt iregNo )
-{
-   return IRExpr_Get(offsetFReg(iregNo), Ity_F32);
-}
-
 static IRExpr* getFReg64 ( UInt iregNo )
 {
    return IRExpr_Get(offsetFReg(iregNo), Ity_F64);
+}
+
+static IRExpr* getFReg32 ( UInt iregNo )
+{
+   /* Get FReg32 from FReg64.
+      We could probably use IRExpr_Get(offsetFReg(iregNo), Ity_F32),
+      but that would cause Memcheck to report some errors.
+    */
+   IRExpr* i = unop(Iop_ReinterpF64asI64, getFReg64(iregNo));
+   return unop(Iop_ReinterpI32asF32, unop(Iop_64to32, i));
 }
 
 static IRExpr* getFCC ( UInt iregNo )
