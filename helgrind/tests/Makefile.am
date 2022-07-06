@@ -6,7 +6,8 @@ dist_noinst_SCRIPTS = filter_stderr   \
 		      filter_helgrind \
 		      filter_xml \
 		      filter_freebsd.awk \
-		      filter_stderr_freebsd
+		      filter_stderr_freebsd \
+		      supported_pthread_tunable
 
 EXTRA_DIST = \
 	annotate_hbefore.vgtest annotate_hbefore.stdout.exp \
@@ -130,7 +131,9 @@ EXTRA_DIST = \
 	tc24_nonzero_sem.vgtest tc24_nonzero_sem.stdout.exp \
 		tc24_nonzero_sem.stderr.exp \
 	tls_threads.vgtest tls_threads.stdout.exp \
-		tls_threads.stderr.exp
+		tls_threads.stderr.exp \
+	tls_threads_tunable.vgtest tls_threads_tunable.stdout.exp \
+		tls_threads_tunable.stderr.exp
 
 # Wrapper headers used by some check programs.
 noinst_HEADERS = safe-pthread.h safe-semaphore.h

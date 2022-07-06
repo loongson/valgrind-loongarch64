@@ -1,0 +1,4 @@
+prereq: ./supported_pthread_tunable
+prog: tls_threads
+vgopts: -q
+env: GLIBC_TUNABLES=glibc.pthread.stack_cache_size=0

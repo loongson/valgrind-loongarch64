@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Exit with status 0 if a tunable named "glibc.pthread.stack_cache_size" is
+# found, otherwise exit with status 1.
+
+if [ "$(uname)" = "Linux" ]; then
+  if [ ! -x /usr/bin/ld.so ]; then
+    echo "Error: could not find the program /usr/bin/ld.so."
+    exit 1
+  fi
+  /usr/bin/ld.so --list-tunables 2>&1 | grep -q 'glibc.pthread.stack_cache_size'
+  exit $?
+fi
+
+# Another OS than Linux, which does not provide "glibc.pthread.stack_cache_size"
+exit 1
+
