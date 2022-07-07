@@ -956,7 +956,7 @@ static Bool VG_(parse_cpuinfo)(void)
 
    /* Parse file */
    vai.hwcaps = 0;
-   if (VG_(strstr)(file_buf, search_Loongson_str) == NULL) {
+   if (VG_(strcasestr)(file_buf, search_Loongson_str) == NULL) {
       /* Did not find string in the proc file. */
       VG_(free)(file_buf);
       return False;
