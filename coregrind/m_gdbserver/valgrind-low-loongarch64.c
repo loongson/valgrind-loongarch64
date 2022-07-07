@@ -37,82 +37,40 @@
 #include "libvex_guest_loongarch64.h"
 
 static struct reg regs[] = {
-   { "r0",      0,    64 },
-   { "r1",      64,   64 },
-   { "r2",      128,  64 },
-   { "r3",      192,  64 },
-   { "r4",      256,  64 },
-   { "r5",      320,  64 },
-   { "r6",      384,  64 },
-   { "r7",      448,  64 },
-   { "r8",      512,  64 },
-   { "r9",      576,  64 },
-   { "r10",     640,  64 },
-   { "r11",     704,  64 },
-   { "r12",     768,  64 },
-   { "r13",     832,  64 },
-   { "r14",     896,  64 },
-   { "r15",     960,  64 },
-   { "r16",     1024, 64 },
-   { "r17",     1088, 64 },
-   { "r18",     1152, 64 },
-   { "r19",     1216, 64 },
-   { "r20",     1280, 64 },
-   { "r21",     1344, 64 },
-   { "r22",     1408, 64 },
-   { "r23",     1472, 64 },
-   { "r24",     1536, 64 },
-   { "r25",     1600, 64 },
-   { "r26",     1664, 64 },
-   { "r27",     1728, 64 },
-   { "r28",     1792, 64 },
-   { "r29",     1856, 64 },
-   { "r30",     1920, 64 },
-   { "r31",     1984, 64 },
-   { "orig_a0", 2048, 64 },
-   { "pc",      2112, 64 },
-   { "badv",    2176, 64 },
-   { "f0",      2240, 64 },
-   { "f1",      2304, 64 },
-   { "f2",      2368, 64 },
-   { "f3",      2432, 64 },
-   { "f4",      2496, 64 },
-   { "f5",      2560, 64 },
-   { "f6",      2624, 64 },
-   { "f7",      2688, 64 },
-   { "f8",      2752, 64 },
-   { "f9",      2816, 64 },
-   { "f10",     2880, 64 },
-   { "f11",     2944, 64 },
-   { "f12",     3008, 64 },
-   { "f13",     3072, 64 },
-   { "f14",     3136, 64 },
-   { "f15",     3200, 64 },
-   { "f16",     3264, 64 },
-   { "f17",     3328, 64 },
-   { "f18",     3392, 64 },
-   { "f19",     3456, 64 },
-   { "f20",     3520, 64 },
-   { "f21",     3584, 64 },
-   { "f22",     3648, 64 },
-   { "f23",     3712, 64 },
-   { "f24",     3776, 64 },
-   { "f25",     3840, 64 },
-   { "f26",     3904, 64 },
-   { "f27",     3968, 64 },
-   { "f28",     4032, 64 },
-   { "f29",     4096, 64 },
-   { "f30",     4160, 64 },
-   { "f31",     4224, 64 },
-   { "fcc0",    4288, 8  },
-   { "fcc1",    4296, 8  },
-   { "fcc2",    4304, 8  },
-   { "fcc3",    4312, 8  },
-   { "fcc4",    4320, 8  },
-   { "fcc5",    4328, 8  },
-   { "fcc6",    4336, 8  },
-   { "fcc7",    4344, 8  },
-   { "fcsr",    4352, 32 }
+   { "r0",       0,    64 },
+   { "r1",       64,   64 },
+   { "r2",       128,  64 },
+   { "r3",       192,  64 },
+   { "r4",       256,  64 },
+   { "r5",       320,  64 },
+   { "r6",       384,  64 },
+   { "r7",       448,  64 },
+   { "r8",       512,  64 },
+   { "r9",       576,  64 },
+   { "r10",      640,  64 },
+   { "r11",      704,  64 },
+   { "r12",      768,  64 },
+   { "r13",      832,  64 },
+   { "r14",      896,  64 },
+   { "r15",      960,  64 },
+   { "r16",      1024, 64 },
+   { "r17",      1088, 64 },
+   { "r18",      1152, 64 },
+   { "r19",      1216, 64 },
+   { "r20",      1280, 64 },
+   { "r21",      1344, 64 },
+   { "r22",      1408, 64 },
+   { "r23",      1472, 64 },
+   { "r24",      1536, 64 },
+   { "r25",      1600, 64 },
+   { "r26",      1664, 64 },
+   { "r27",      1728, 64 },
+   { "r28",      1792, 64 },
+   { "r29",      1856, 64 },
+   { "r30",      1920, 64 },
+   { "r31",      1984, 64 },
+   { "pc",       2048, 64 },
+   { "badvaddr", 2112, 64 }
 };
 
 #define num_regs (sizeof (regs) / sizeof (regs[0]))
@@ -189,50 +147,8 @@ void transfer_register (ThreadId tid, int abs_regno, void* buf,
    case 29: VG_(transfer) (&loongarch64->guest_R29,  buf, dir, size, mod); break;
    case 30: VG_(transfer) (&loongarch64->guest_R30,  buf, dir, size, mod); break;
    case 31: VG_(transfer) (&loongarch64->guest_R31,  buf, dir, size, mod); break;
-   case 32: *mod = False; break; // GDBTD?? arg0
-   case 33: VG_(transfer) (&loongarch64->guest_PC,   buf, dir, size, mod); break;
-   case 34: *mod = False; break; // GDBTD?? badvaddr
-   case 35: VG_(transfer) (&loongarch64->guest_F0,   buf, dir, size, mod); break;
-   case 36: VG_(transfer) (&loongarch64->guest_F1,   buf, dir, size, mod); break;
-   case 37: VG_(transfer) (&loongarch64->guest_F2,   buf, dir, size, mod); break;
-   case 38: VG_(transfer) (&loongarch64->guest_F3,   buf, dir, size, mod); break;
-   case 39: VG_(transfer) (&loongarch64->guest_F4,   buf, dir, size, mod); break;
-   case 40: VG_(transfer) (&loongarch64->guest_F5,   buf, dir, size, mod); break;
-   case 41: VG_(transfer) (&loongarch64->guest_F6,   buf, dir, size, mod); break;
-   case 42: VG_(transfer) (&loongarch64->guest_F7,   buf, dir, size, mod); break;
-   case 43: VG_(transfer) (&loongarch64->guest_F8,   buf, dir, size, mod); break;
-   case 44: VG_(transfer) (&loongarch64->guest_F9,   buf, dir, size, mod); break;
-   case 45: VG_(transfer) (&loongarch64->guest_F10,  buf, dir, size, mod); break;
-   case 46: VG_(transfer) (&loongarch64->guest_F11,  buf, dir, size, mod); break;
-   case 47: VG_(transfer) (&loongarch64->guest_F12,  buf, dir, size, mod); break;
-   case 48: VG_(transfer) (&loongarch64->guest_F13,  buf, dir, size, mod); break;
-   case 49: VG_(transfer) (&loongarch64->guest_F14,  buf, dir, size, mod); break;
-   case 50: VG_(transfer) (&loongarch64->guest_F15,  buf, dir, size, mod); break;
-   case 51: VG_(transfer) (&loongarch64->guest_F16,  buf, dir, size, mod); break;
-   case 52: VG_(transfer) (&loongarch64->guest_F17,  buf, dir, size, mod); break;
-   case 53: VG_(transfer) (&loongarch64->guest_F18,  buf, dir, size, mod); break;
-   case 54: VG_(transfer) (&loongarch64->guest_F19,  buf, dir, size, mod); break;
-   case 55: VG_(transfer) (&loongarch64->guest_F20,  buf, dir, size, mod); break;
-   case 56: VG_(transfer) (&loongarch64->guest_F21,  buf, dir, size, mod); break;
-   case 57: VG_(transfer) (&loongarch64->guest_F22,  buf, dir, size, mod); break;
-   case 58: VG_(transfer) (&loongarch64->guest_F23,  buf, dir, size, mod); break;
-   case 59: VG_(transfer) (&loongarch64->guest_F24,  buf, dir, size, mod); break;
-   case 60: VG_(transfer) (&loongarch64->guest_F25,  buf, dir, size, mod); break;
-   case 61: VG_(transfer) (&loongarch64->guest_F26,  buf, dir, size, mod); break;
-   case 62: VG_(transfer) (&loongarch64->guest_F27,  buf, dir, size, mod); break;
-   case 63: VG_(transfer) (&loongarch64->guest_F28,  buf, dir, size, mod); break;
-   case 64: VG_(transfer) (&loongarch64->guest_F29,  buf, dir, size, mod); break;
-   case 65: VG_(transfer) (&loongarch64->guest_F30,  buf, dir, size, mod); break;
-   case 66: VG_(transfer) (&loongarch64->guest_F31,  buf, dir, size, mod); break;
-   case 67: VG_(transfer) (&loongarch64->guest_FCC0, buf, dir, size, mod); break;
-   case 68: VG_(transfer) (&loongarch64->guest_FCC1, buf, dir, size, mod); break;
-   case 69: VG_(transfer) (&loongarch64->guest_FCC2, buf, dir, size, mod); break;
-   case 70: VG_(transfer) (&loongarch64->guest_FCC3, buf, dir, size, mod); break;
-   case 71: VG_(transfer) (&loongarch64->guest_FCC4, buf, dir, size, mod); break;
-   case 72: VG_(transfer) (&loongarch64->guest_FCC5, buf, dir, size, mod); break;
-   case 73: VG_(transfer) (&loongarch64->guest_FCC6, buf, dir, size, mod); break;
-   case 74: VG_(transfer) (&loongarch64->guest_FCC7, buf, dir, size, mod); break;
-   case 75: VG_(transfer) (&loongarch64->guest_FCSR, buf, dir, size, mod); break;
+   case 32: VG_(transfer) (&loongarch64->guest_PC,   buf, dir, size, mod); break;
+   case 33: *mod = False; break; // GDBTD?? badvaddr
    default: vg_assert(0);
    }
 }

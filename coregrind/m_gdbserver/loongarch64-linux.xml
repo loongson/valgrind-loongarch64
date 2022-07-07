@@ -10,5 +10,4 @@
   <architecture>loongarch</architecture>
   <osabi>GNU/Linux</osabi>
   <xi:include href="loongarch-base64.xml"/>
-  <xi:include href="loongarch-fpu64.xml"/>
 </target>

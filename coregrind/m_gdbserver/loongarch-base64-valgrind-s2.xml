@@ -39,7 +39,6 @@
   <reg name="r29s2" bitsize="64" type="uint64" group="general"/>
   <reg name="r30s2" bitsize="64" type="uint64" group="general"/>
   <reg name="r31s2" bitsize="64" type="uint64" group="general"/>
-  <reg name="orig_a0s2" bitsize="64" type="uint64" group="general"/>
   <reg name="pcs2" bitsize="64" type="code_ptr" group="general"/>
-  <reg name="badvs2" bitsize="64" type="code_ptr" group="general"/>
+  <reg name="badvaddrs2" bitsize="64" type="code_ptr" group="general"/>
 </feature>
