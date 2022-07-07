@@ -764,7 +764,11 @@ void restore_and_detach (pid_t pid)
       }
 
       DEBUG(1, "setregs restore registers pid %d\n", pid_of_save_regs);
+#if defined(VGP_loongarch64_linux)
+      if (!setregs(pid_of_save_regs, &user_save.gpr, sizeof(user_save.gpr))) {
+#else
       if (!setregs(pid_of_save_regs, &user_save.regs, sizeof(user_save.regs))) {
+#endif
          ERROR(errno, "setregs restore registers pid %d after cont\n",
                pid_of_save_regs);
       }
@@ -846,7 +850,11 @@ Bool invoker_invoke_gdbserver (pid_t pid)
       return False;
    }
 
+#if defined(VGP_loongarch64_linux)
+   if (!getregs(pid, &user_mod.gpr, sizeof(user_mod.gpr))) {
+#else
    if (!getregs(pid, &user_mod.regs, sizeof(user_mod.regs))) {
+#endif
       detach_from_all_threads(pid);
       return False;
    }
@@ -882,7 +890,7 @@ Bool invoker_invoke_gdbserver (pid_t pid)
 #elif defined(VGA_mips64)
    sp = user_mod.regs[29];
 #elif defined(VGA_loongarch64)
-   sp = user_mod.regs[3];
+   sp = user_mod.gpr[3];
 #else
    I_die_here : (sp) architecture missing in vgdb-invoker-ptrace.c
 #endif
@@ -1081,10 +1089,10 @@ Bool invoker_invoke_gdbserver (pid_t pid)
       user_mod.regs[25] = shared64->invoke_gdbserver;
 #elif defined(VGA_loongarch64)
       /* put check arg in register a0 */
-      user_mod.regs[4] = check;
+      user_mod.gpr[4] = check;
       /* put NULL return address in ra */
-      user_mod.regs[1] = bad_return;
-      user_mod.csr_era = shared64->invoke_gdbserver;
+      user_mod.gpr[1] = bad_return;
+      user_mod.pc = shared64->invoke_gdbserver;
 #else
       I_die_here: architecture missing in vgdb-invoker-ptrace.c
 #endif
@@ -1093,7 +1101,11 @@ Bool invoker_invoke_gdbserver (pid_t pid)
       assert(0);
    }
 
+#if defined(VGP_loongarch64_linux)
+   if (!setregs(pid, &user_mod.gpr, sizeof(user_mod.gpr))) {
+#else
    if (!setregs(pid, &user_mod.regs, sizeof(user_mod.regs))) {
+#endif
       detach_from_all_threads(pid);
       return False;
    }
