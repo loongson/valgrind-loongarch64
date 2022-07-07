@@ -282,3 +282,11 @@
   fun:tls_get_addr_tail*
   fun:__tls_get_addr
 }
+
+##----------------------------------------------------------------------##
+# LoongArch64 Loongnix-Server.
+{
+   dl-dst-count
+   Memcheck:Cond
+   fun:_dl_dst_count
+}
