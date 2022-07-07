@@ -390,8 +390,8 @@ static SyscallTableEntry syscall_main_table[] = {
    LINX_(__NR_splice,                  sys_splice),                  // 76
    LINX_(__NR_tee,                     sys_tee),                     // 77
    LINX_(__NR_readlinkat,              sys_readlinkat),              // 78
-   //   (__NR3264_fstatat,             sys_newfstatat),              // 79
-   //   (__NR3264_fstat,               sys_newfstat),                // 80
+   LINXY(__NR3264_fstatat,             sys_newfstatat),              // 79
+   GENXY(__NR3264_fstat,               sys_newfstat),                // 80
    GENX_(__NR_sync,                    sys_sync),                    // 81
    GENX_(__NR_fsync,                   sys_fsync),                   // 82
    GENX_(__NR_fdatasync,               sys_fdatasync),               // 83
@@ -590,33 +590,8 @@ static SyscallTableEntry syscall_main_table[] = {
    LINXY(__NR_statx,                   sys_statx),                   // 291
    //   (__NR_io_pgetevents,           sys_io_pgetevents),           // 292
    //   (__NR_rseq,                    sys_rseq),                    // 293
-   //   (__NR_kexec_file_load,         sys_kexec_file_load),         // 294
 
-   //   (__NR_pidfd_send_signal,       sys_pidfd_send_signal),       // 424
-   LINXY(__NR_io_uring_setup,          sys_io_uring_setup),          // 425
-   LINXY(__NR_io_uring_enter,          sys_io_uring_enter),          // 426
-   LINXY(__NR_io_uring_register,       sys_io_uring_register),       // 427
-   //   (__NR_open_tree,               sys_open_tree),               // 428
-   //   (__NR_move_mount,              sys_move_mount),              // 429
-   //   (__NR_fsopen,                  sys_fsopen),                  // 430
-   //   (__NR_fsconfig,                sys_fsconfig),                // 431
-   //   (__NR_fsmount,                 sys_fsmount),                 // 432
-   //   (__NR_fspick,                  sys_fspick),                  // 433
-   //   (__NR_pidfd_open,              sys_pidfd_open),              // 434
    GENX_(__NR_clone3,                  sys_ni_syscall),              // 435
-   LINXY(__NR_close_range,             sys_close_range),             // 436
-   //   (__NR_openat2,                 sys_openat2),                 // 437
-   //   (__NR_pidfd_getfd,             sys_pidfd_getfd),             // 438
-   LINX_(__NR_faccessat2,              sys_faccessat2),              // 439
-   //   (__NR_process_madvise,         sys_process_madvise),         // 440
-   //   (__NR_epoll_pwait2,            sys_epoll_pwait2),            // 441
-   //   (__NR_mount_setattr,           sys_mount_setattr),           // 442
-   //   (__NR_quotactl_fd,             sys_quotactl_fd),             // 443
-   //   (__NR_landlock_create_ruleset, sys_landlock_create_ruleset), // 444
-   //   (__NR_landlock_add_rule,       sys_landlock_add_rule),       // 445
-   //   (__NR_landlock_restrict_self,  sys_landlock_restrict_self),  // 446
-   //   (__NR_memfd_secret,            sys_memfd_secret),            // 447
-   //   (__NR_process_mrelease,        sys_process_mrelease),        // 448
 };
 
 SyscallTableEntry* ML_(get_linux_syscall_entry) ( UInt sysno )

@@ -152,7 +152,7 @@ typedef __vki_restorefn_t __user *__vki_igrestore_t;
 // From linux-5.19-rc1/include/uapi/asm-generic/signal.h
 //----------------------------------------------------------------------
 
-#define _VKI_NSIG       64
+#define _VKI_NSIG       128
 #define _VKI_NSIG_BPW   64 // __BITS_PER_LONG == 64
 #define _VKI_NSIG_WORDS (_VKI_NSIG / _VKI_NSIG_BPW)
 
@@ -245,11 +245,27 @@ typedef struct vki_sigaltstack {
 // From linux-5.19-rc1/arch/loongarch/include/uapi/asm/sigcontext.h
 //----------------------------------------------------------------------
 
+#define VKI_FPU_REG_WIDTH 256
+
 struct vki_sigcontext {
    __vki_u64 sc_pc;
    __vki_u64 sc_regs[32];
+   /*
+   * bits allocation of sc_flags:
+   * bit 0 : USED_FP
+   * bit 30: ADRERR_RD
+   * bit 31: ADRERR_WR
+   */
    __vki_u32 sc_flags;
-   __vki_u64 sc_extcontext[0] __attribute__((__aligned__(16)));
+   __vki_u32 sc_fcsr;
+   __vki_u32 sc_none;
+   __vki_u64 sc_fcc;
+   __vki_u64 sc_scr[4];
+   union {
+      __vki_u32 val32[VKI_FPU_REG_WIDTH / 32];
+      __vki_u64 val64[VKI_FPU_REG_WIDTH / 64];
+   } sc_fpregs[32] __attribute__((aligned(32)));
+   __vki_u8 sc_reserved[4096] __attribute__((__aligned__(16)));
 };
 
 //----------------------------------------------------------------------
@@ -699,12 +715,19 @@ typedef vki_elf_fpreg_t vki_elf_fpregset_t[VKI_ELF_NFPREG];
 //----------------------------------------------------------------------
 
 struct vki_ucontext {
+   /* Historic fields matching asm-generic */
    unsigned long         uc_flags;
    struct vki_ucontext   *uc_link;
    vki_stack_t           uc_stack;
-   vki_sigset_t          uc_sigmask;
-   __vki_u8              __unused[1024 / 8 - sizeof(vki_sigset_t)];
    struct vki_sigcontext uc_mcontext;
+   vki_sigset_t          uc_sigmask;
+   /**
+    * There's some padding here to allow sigset_t to be expanded in the
+     * future.  Though this is unlikely, other architectures put uc_sigmask
+     * at the end of this structure and explicitly state it can be
+     * expanded, so we didn't want to box ourselves in here.
+     */
+   __vki_u8               __unused[1024 / 8 - sizeof(vki_sigset_t)];
 };
 
 typedef char vki_modify_ldt_t;
@@ -793,17 +816,12 @@ struct vki_shminfo64 {
 //----------------------------------------------------------------------
 
 struct vki_user_pt_regs {
-   /* Saved main processor registers. */
-   unsigned long regs[32];
+	unsigned long regs[32];
 
-   /* Original syscall arg0. */
-   unsigned long orig_a0;
-
-   /* Saved special registers. */
-   unsigned long csr_era;
-   unsigned long csr_badv;
-   unsigned long reserved[10];
-} __attribute__((aligned(8)));
+	unsigned long csr_era;
+	unsigned long csr_badv;
+	unsigned long reserved[11];
+};
 
 #define vki_user_regs_struct vki_user_pt_regs
 

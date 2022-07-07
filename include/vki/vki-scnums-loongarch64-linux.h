@@ -111,8 +111,8 @@
 #define __NR_splice 76
 #define __NR_tee 77
 #define __NR_readlinkat 78
-// #define __NR3264_fstatat 79
-// #define __NR3264_fstat 80
+#define __NR3264_fstatat 79
+#define __NR3264_fstat 80
 #define __NR_sync 81
 #define __NR_fsync 82
 #define __NR_fdatasync 83
@@ -311,33 +311,8 @@
 #define __NR_statx 291
 #define __NR_io_pgetevents 292
 #define __NR_rseq 293
-#define __NR_kexec_file_load 294
 
-#define __NR_pidfd_send_signal 424
-#define __NR_io_uring_setup 425
-#define __NR_io_uring_enter 426
-#define __NR_io_uring_register 427
-#define __NR_open_tree 428
-#define __NR_move_mount 429
-#define __NR_fsopen 430
-#define __NR_fsconfig 431
-#define __NR_fsmount 432
-#define __NR_fspick 433
-#define __NR_pidfd_open 434
 #define __NR_clone3 435
-#define __NR_close_range 436
-#define __NR_openat2 437
-#define __NR_pidfd_getfd 438
-#define __NR_faccessat2 439
-#define __NR_process_madvise 440
-#define __NR_epoll_pwait2 441
-#define __NR_mount_setattr 442
-#define __NR_quotactl_fd 443
-#define __NR_landlock_create_ruleset 444
-#define __NR_landlock_add_rule 445
-#define __NR_landlock_restrict_self 446
-// #define __NR_memfd_secret 447
-#define __NR_process_mrelease 448
 
 #define __NR_fcntl __NR3264_fcntl
 #define __NR_statfs __NR3264_statfs
