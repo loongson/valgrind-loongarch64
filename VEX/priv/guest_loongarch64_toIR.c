@@ -3619,6 +3619,12 @@ static Bool gen_amswap_w ( DisResult* dres, UInt insn,
 
    DIP("amswap.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMSWAP, False, rd, rj, rk);
 }
 
@@ -3631,6 +3637,12 @@ static Bool gen_amswap_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amswap.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMSWAP, False, rd, rj, rk);
 }
@@ -3645,6 +3657,12 @@ static Bool gen_amadd_w ( DisResult* dres, UInt insn,
 
    DIP("amadd.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMADD, False, rd, rj, rk);
 }
 
@@ -3657,6 +3675,12 @@ static Bool gen_amadd_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amadd.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMADD, False, rd, rj, rk);
 }
@@ -3671,6 +3695,12 @@ static Bool gen_amand_w ( DisResult* dres, UInt insn,
 
    DIP("amand.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMAND, False, rd, rj, rk);
 }
 
@@ -3683,6 +3713,12 @@ static Bool gen_amand_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amand.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMAND, False, rd, rj, rk);
 }
@@ -3697,6 +3733,12 @@ static Bool gen_amor_w ( DisResult* dres, UInt insn,
 
    DIP("amor.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMOR, False, rd, rj, rk);
 }
 
@@ -3709,6 +3751,12 @@ static Bool gen_amor_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amor.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMOR, False, rd, rj, rk);
 }
@@ -3723,6 +3771,12 @@ static Bool gen_amxor_w ( DisResult* dres, UInt insn,
 
    DIP("amxor.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMXOR, False, rd, rj, rk);
 }
 
@@ -3735,6 +3789,12 @@ static Bool gen_amxor_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amxor.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMXOR, False, rd, rj, rk);
 }
@@ -3749,6 +3809,12 @@ static Bool gen_ammax_w ( DisResult* dres, UInt insn,
 
    DIP("ammax.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMAX, False, rd, rj, rk);
 }
 
@@ -3761,6 +3827,12 @@ static Bool gen_ammax_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammax.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMAX, False, rd, rj, rk);
 }
@@ -3775,6 +3847,12 @@ static Bool gen_ammin_w ( DisResult* dres, UInt insn,
 
    DIP("ammin.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMIN, False, rd, rj, rk);
 }
 
@@ -3787,6 +3865,12 @@ static Bool gen_ammin_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammin.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMIN, False, rd, rj, rk);
 }
@@ -3801,6 +3885,12 @@ static Bool gen_ammax_wu ( DisResult* dres, UInt insn,
 
    DIP("ammax.wu %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMAX_U, False, rd, rj, rk);
 }
 
@@ -3813,6 +3903,12 @@ static Bool gen_ammax_du ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammax.du %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMAX_U, False, rd, rj, rk);
 }
@@ -3827,6 +3923,12 @@ static Bool gen_ammin_wu ( DisResult* dres, UInt insn,
 
    DIP("ammin.wu %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMIN_U, False, rd, rj, rk);
 }
 
@@ -3839,6 +3941,12 @@ static Bool gen_ammin_du ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammin.du %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMIN_U, False, rd, rj, rk);
 }
@@ -3853,6 +3961,12 @@ static Bool gen_amswap_db_w ( DisResult* dres, UInt insn,
 
    DIP("amswap_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMSWAP, True, rd, rj, rk);
 }
 
@@ -3865,6 +3979,12 @@ static Bool gen_amswap_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amswap_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMSWAP, True, rd, rj, rk);
 }
@@ -3879,6 +3999,12 @@ static Bool gen_amadd_db_w ( DisResult* dres, UInt insn,
 
    DIP("amadd_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMADD, True, rd, rj, rk);
 }
 
@@ -3891,6 +4017,12 @@ static Bool gen_amadd_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amadd_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMADD, True, rd, rj, rk);
 }
@@ -3905,6 +4037,12 @@ static Bool gen_amand_db_w ( DisResult* dres, UInt insn,
 
    DIP("amand_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMAND, True, rd, rj, rk);
 }
 
@@ -3917,6 +4055,12 @@ static Bool gen_amand_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amand_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMAND, True, rd, rj, rk);
 }
@@ -3931,6 +4075,12 @@ static Bool gen_amor_db_w ( DisResult* dres, UInt insn,
 
    DIP("amor_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMOR, True, rd, rj, rk);
 }
 
@@ -3943,6 +4093,12 @@ static Bool gen_amor_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amor_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMOR, True, rd, rj, rk);
 }
@@ -3957,6 +4113,12 @@ static Bool gen_amxor_db_w ( DisResult* dres, UInt insn,
 
    DIP("amxor_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMXOR, True, rd, rj, rk);
 }
 
@@ -3969,6 +4131,12 @@ static Bool gen_amxor_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("amxor_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMXOR, True, rd, rj, rk);
 }
@@ -3983,6 +4151,12 @@ static Bool gen_ammax_db_w ( DisResult* dres, UInt insn,
 
    DIP("ammax_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMAX, True, rd, rj, rk);
 }
 
@@ -3995,6 +4169,12 @@ static Bool gen_ammax_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammax_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMAX, True, rd, rj, rk);
 }
@@ -4009,6 +4189,12 @@ static Bool gen_ammin_db_w ( DisResult* dres, UInt insn,
 
    DIP("ammin_db.w %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMIN, True, rd, rj, rk);
 }
 
@@ -4021,6 +4207,12 @@ static Bool gen_ammin_db_d ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammin_db.d %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMIN, True, rd, rj, rk);
 }
@@ -4035,6 +4227,12 @@ static Bool gen_ammax_db_wu ( DisResult* dres, UInt insn,
 
    DIP("ammax_db.wu %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMAX_U, True, rd, rj, rk);
 }
 
@@ -4047,6 +4245,12 @@ static Bool gen_ammax_db_du ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammax_db.du %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMAX_U, True, rd, rj, rk);
 }
@@ -4061,6 +4265,12 @@ static Bool gen_ammin_db_wu ( DisResult* dres, UInt insn,
 
    DIP("ammin_db.wu %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
 
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
+
    return gen_am_w_helper(AMMIN_U, True, rd, rj, rk);
 }
 
@@ -4073,6 +4283,12 @@ static Bool gen_ammin_db_du ( DisResult* dres, UInt insn,
    UInt rd = get_rd(insn);
 
    DIP("ammin_db.du %s, %s, %s\n", nameIReg(rd), nameIReg(rk), nameIReg(rj));
+
+   if (!(archinfo->hwcaps & VEX_HWCAPS_LOONGARCH_LAM)) {
+      dres->jk_StopHere = Ijk_SigILL;
+      dres->whatNext    = Dis_StopHere;
+      return True;
+   }
 
    return gen_am_d_helper(AMMIN_U, True, rd, rj, rk);
 }
