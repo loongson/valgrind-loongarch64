@@ -2537,6 +2537,9 @@ static inline UInt* mkXAssisted ( UInt* p, HReg dstGA, LOONGARCH64AMode* amPC,
       case Ijk_SigFPE_IntOvf:
          trcval = VEX_TRC_JMP_SIGFPE_INTOVF;
          break;
+      case Ijk_SigSYS:
+         trcval = VEX_TRC_JMP_SIGSYS;
+         break;
       case Ijk_Sys_syscall:
          trcval = VEX_TRC_JMP_SYS_SYSCALL;
          break;
